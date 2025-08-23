@@ -1,0 +1,21 @@
+{
+  "botName": "Korō Assistant",
+  "version": "1.0.0",
+  "color": "#FFFFFF",
+  "defaultLanguage": "en",
+  "guildId": "1407626539822223456",
+  "channels": {
+    "welcomeChannelId": "1407818296840945665",
+    "rulesChannelId": "1407818299399475270"
+  },
+  "roles": {
+    "autoRoleId": "1407818293141569798"
+  },
+  "embeds": {
+    "brand": {
+      "accentHex": "#FFFFFF",
+      "footerText": "© Bynex",
+      "thumbnailUrl": ""
+    }
+  }
+}

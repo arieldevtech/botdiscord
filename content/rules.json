@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "title": "Server Rules",
+  "lastUpdated": "2025-08-21T12:00:00Z",
+  "sections": [
+    {
+      "name": "Behavior",
+      "items": [
+        "**Be respectful** to everyone. No insults, personal attacks, or harassment.",
+        "Keep language **clean and inclusive**. Slurs, hate speech, or discriminatory remarks are strictly **forbidden**.",
+        "Avoid **spam**: no excessive pings, repeated messages, or disruptive formatting.",
+        "Use **English** for public channels unless otherwise specified.",
+        "> Treat others how you’d like to be treated — kindness builds a strong community."
+      ]
+    },
+    {
+      "name": "Content",
+      "items": [
+        "**No NSFW/NSFL** content of any kind.",
+        "**No piracy or illegal content** (cracks, ROMs, warez, leaked data).",
+        "**No self‑promotion or ads** without prior moderator approval.",
+        "Respect intellectual property; credit original creators.",
+        "Use appropriate channels for media; keep large media in designated threads."
+      ]
+    },
+    {
+      "name": "Channels & Organization",
+      "items": [
+        "Post **on topic**. Read channel descriptions before posting.",
+        "Use **threads** to keep discussions tidy when possible.",
+        "Move long debates to threads or the appropriate channel.",
+        "Don’t derail active conversations; be constructive.",
+        "📌 Check **#rules** and **#announcements** regularly for updates."
+      ]
+    },
+    {
+      "name": "Privacy & Security",
+      "items": [
+        "**Do not share personal information** (yours or others’).",
+        "**No doxxing** or attempts to reveal private details.",
+        "Report suspicious links or DMs to staff. **Don’t click unknown links.**",
+        "Disable unsolicited DMs from server members if needed.",
+        "We will never ask for your password or 2FA codes."
+      ]
+    },
+    {
+      "name": "Enforcement",
+      "items": [
+        "Moderators may issue **warnings**, **mutes**, **kicks**, or **bans** at their discretion.",
+        "Minor infractions typically receive a warning; repeated violations escalate.",
+        "Severe violations may result in immediate ban **without prior warning**.",
+        "Appeals can be submitted to staff; final decisions rest with the admin team."
+      ]
+    },
+    {
+      "name": "Compliance",
+      "items": [
+        "By participating, you agree to the **[Discord Terms of Service](https://discord.com/terms)** and **[Community Guidelines](https://discord.com/guidelines)**.",
+        "If rules are unclear, ask staff for clarification before posting.",
+        "Rules may be updated; changes will be announced. **Stay informed.**"
+      ]
+    }
+  ]
+}

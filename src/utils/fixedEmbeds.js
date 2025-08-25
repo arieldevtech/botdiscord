@@ -45,44 +45,46 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
   const { hash, version, lastUpdated, embed } = payload;
   const changed = cache.lastAppliedHash !== hash;
 
-  if (!cache.messageId) {
-    // Post new message and pin
+  // Helper to post & pin, then persist cache
+  const postAndPin = async () => {
     try {
       const message = await channel.send({ embeds: [embed] });
       try { await message.pin(); } catch (_) {}
       writeJson(cachePath, { messageId: message.id, lastAppliedHash: hash, lastAppliedVersion: version ?? null, lastUpdated: lastUpdated || new Date().toISOString() });
-      logger.success(`[fixedEmbeds:${slug}] Posted and pinned new message (${message.id})`);
+      logger.success(`[fixedEmbeds:${slug}] Posted and pinned message (${message.id})`);
     } catch (e) {
       logger.error(`[fixedEmbeds:${slug}] Failed to post message:`, e);
     }
+  };
+
+  if (!cache.messageId) {
+    await postAndPin();
     return;
   }
 
-  // If no change, do nothing
-  if (!changed) {
-    logger.info(`[fixedEmbeds:${slug}] No changes detected; skipping update`);
-    return;
-  }
-
-  // Edit existing message, or re-create if missing
+  // Always check whether the cached message still exists in the channel
   const existing = await fetchMessageById(channel, cache.messageId);
-  if (existing) {
-    try {
-      await existing.edit({ embeds: [embed] });
-      writeJson(cachePath, { messageId: existing.id, lastAppliedHash: hash, lastAppliedVersion: version ?? null, lastUpdated: lastUpdated || new Date().toISOString() });
-      logger.success(`[fixedEmbeds:${slug}] Edited pinned message (${existing.id})`);
-    } catch (e) {
-      logger.error(`[fixedEmbeds:${slug}] Failed to edit message:`, e);
-    }
-  } else {
-    try {
-      const message = await channel.send({ embeds: [embed] });
-      try { await message.pin(); } catch (_) {}
-      writeJson(cachePath, { messageId: message.id, lastAppliedHash: hash, lastAppliedVersion: version ?? null, lastUpdated: lastUpdated || new Date().toISOString() });
-      logger.success(`[fixedEmbeds:${slug}] Reposted and pinned new message (${message.id})`);
-    } catch (e) {
-      logger.error(`[fixedEmbeds:${slug}] Failed to repost message:`, e);
-    }
+  if (!existing) {
+    // Message deleted or not accessible anymore: recreate regardless of change
+    await postAndPin();
+    return;
+  }
+
+  // Ensure it's pinned (best-effort)
+  try { if (!existing.pinned) await existing.pin(); } catch (_) {}
+
+  if (!changed) {
+    logger.info(`[fixedEmbeds:${slug}] No changes detected; keeping current message (${existing.id})`);
+    return;
+  }
+
+  // Edit existing message content
+  try {
+    await existing.edit({ embeds: [embed] });
+    writeJson(cachePath, { messageId: existing.id, lastAppliedHash: hash, lastAppliedVersion: version ?? null, lastUpdated: lastUpdated || new Date().toISOString() });
+    logger.success(`[fixedEmbeds:${slug}] Edited pinned message (${existing.id})`);
+  } catch (e) {
+    logger.error(`[fixedEmbeds:${slug}] Failed to edit message:`, e);
   }
 }
 

@@ -43,7 +43,9 @@ const clientId = process.env.CLIENT_ID;
 const guildId = process.env.GUILD_ID;
 
 if (!token.match(/^[A-Za-z0-9._-]{59}$/)) {
-  logger.error("Invalid TOKEN format. Should be a 59-character string from Discord Developer Portal.");
+// Validate token format (Discord tokens are typically 59-72 characters)
+if (!token.match(/^[A-Za-z0-9._-]{59,72}$/)) {
+  logger.error("Invalid TOKEN format. Should be a 59-72 character string from Discord Developer Portal.");
   logger.error("Make sure your .env file contains: DISCORD_TOKEN=your_actual_token_here");
   logger.error("Get your token from: https://discord.com/developers/applications");
   process.exit(1);

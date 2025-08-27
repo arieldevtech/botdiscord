@@ -40,10 +40,6 @@ async function ensureTicketHub(client) {
   const embed = buildHubEmbed();
   const menu = buildHubMenu();
 
-  // Créer les boutons d'action pour le ticket
-  const ticketManager = new TicketManager(client);
-  const buttons = ticketManager.createTicketButtons(ticket.id, categoryKey);
-
   if (cache.hubMessageId) {
     const msg = await channel.messages.fetch(cache.hubMessageId).catch(() => null);
     if (msg) {

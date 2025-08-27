@@ -13,7 +13,7 @@ async function registerGuildCommands(commandsJson) {
   }
 
   // Validate token format
-  if (!token.startsWith('Bot ') && !token.match(/^[A-Za-z0-9._-]{59}$/)) {
+  if (!token.match(/^[A-Za-z0-9._-]{59,72}$/)) {
     logger.warn("TOKEN appears to be invalid format. Should be a 59-character string from Discord Developer Portal");
     return;
   }

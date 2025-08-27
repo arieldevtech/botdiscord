@@ -94,9 +94,14 @@ module.exports = {
           components: buttons 
         });
         
+        const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
+        await interaction.editReply({ embeds: [brandEmbed({ 
+          title: "✅ **Ticket Created**", 
+          description: `Your **${categoryName}** ticket has been created successfully!\n\n**Channel:** ${channel}\n\nPlease check your DMs for additional information.` 
+        })] });
+        
         // DM notification
         try {
-          const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
           await interaction.user.send({ embeds: [brandEmbed({ 
             title: "🎫 **Ticket Created Successfully**", 
             description: `Your **${categoryName}** ticket has been created and our team has been notified.\n\n**Channel:** ${channel}\n**Next Steps:** Please answer the questions in your ticket channel to help us assist you better.\n\n*A staff member will respond as soon as possible.*`,
@@ -106,11 +111,6 @@ module.exports = {
           })] });
         } catch (_) {}
 
-        const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
-        await interaction.editReply({ embeds: [brandEmbed({ 
-          title: "✅ **Ticket Created**", 
-          description: `Your **${categoryName}** ticket has been created successfully!\n\n**Channel:** ${channel}\n\nPlease check your DMs for additional information.` 
-        })] });
         return;
       }
 
@@ -204,10 +204,6 @@ module.exports = {
             await ticketManager.handleAnswerSubmission(interaction, ticketId);
             return;
 
-          case "modal":
-            await ticketManager.handleAnswerSubmission(interaction, ticketId);
-            return;
-
           case "claim":
             await ticketManager.handleClaim(interaction, ticketId);
             return;
@@ -266,18 +262,17 @@ module.exports = {
           case "accept_quote":
             const quoteId = parts[2];
             if (getDatabase().isEnabled()) {
+              await interaction.deferReply({ flags: 64 });
               try {
                 const quote = await getDatabase().getQuoteById(quoteId);
                 if (!quote) {
-                  return interaction.reply({
-                    flags: 64,
+                  return interaction.editReply({
                     embeds: [errorEmbed("❌ Quote not found.")]
                   });
                 }
 
                 if (quote.status !== 'pending') {
-                  return interaction.reply({
-                    flags: 64,
+                  return interaction.editReply({
                     embeds: [errorEmbed("❌ This quote is no longer available.")]
                   });
                 }
@@ -313,7 +308,7 @@ module.exports = {
                     .setURL(session.url)
                 );
 
-                await interaction.reply({ embeds: [embed], components: [row] });
+                await interaction.editReply({ embeds: [embed], components: [row] });
 
                 // Notify in ticket
                 const ticketEmbed = brandEmbed({
@@ -330,8 +325,7 @@ module.exports = {
 
               } catch (error) {
                 console.error('Error accepting quote:', error);
-                await interaction.reply({
-                  flags: 64,
+                await interaction.editReply({
                   embeds: [errorEmbed("❌ Error while accepting the quote.")]
                 });
               }

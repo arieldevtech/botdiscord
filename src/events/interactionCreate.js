@@ -312,7 +312,7 @@ module.exports = {
           const productIndex = products.findIndex(p => p.sku === sku);
           if (productIndex === -1) {
             return interaction.update({
-              embeds: [errorEmbed("❌ Database not available.")]
+              embeds: [errorEmbed("❌ Database not available.")],
               components: []
             });
           }

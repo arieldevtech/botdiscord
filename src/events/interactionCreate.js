@@ -63,7 +63,10 @@ module.exports = {
           // Check for existing open ticket
           const existingTicket = await db.getOpenTicketByUserId(user.id);
           if (existingTicket) {
-            return interaction.reply({ embeds: [errorEmbed("❌ **Ticket Already Open**\n\nYou already have an active ticket. Please close it before creating a new one.\n\n**Your current ticket:** <#" + existingTicket.channel_id + ">")], flags: 64 });
+            return interaction.reply({ 
+              embeds: [errorEmbed("❌ **Ticket Already Open**\n\nYou already have an active ticket. Please close it before creating a new one.\n\n**Your current ticket:** <#" + existingTicket.channel_id + ">")], 
+              flags: 64 
+            });
           }
         }
 
@@ -119,7 +122,7 @@ module.exports = {
         const content = readFaqContent();
         if (!content.data) {
           return interaction.reply({
-            ephemeral: true,
+            flags: 64,
             embeds: [errorEmbed("❌ FAQ content not available.")]
           });
         }
@@ -128,7 +131,7 @@ module.exports = {
         const buttons = buildFaqButtons();
         
         await interaction.reply({
-          ephemeral: true,
+          flags: 64,
           embeds: [embed],
           components: [buttons]
         });
@@ -139,17 +142,16 @@ module.exports = {
         const action = interaction.customId.split(":")[1];
         
         if (action === "back") {
-          const { readFaqContent } = require("../features/faq");
+          const { readFaqContent, buildFaqMainEmbed, buildFaqSelectMenu } = require("../features/faq");
           const content = readFaqContent();
           
           if (!content.data) {
             return interaction.reply({
-              ephemeral: true,
+              flags: 64,
               embeds: [errorEmbed("❌ FAQ content not available.")]
             });
           }
 
-          const { buildFaqMainEmbed, buildFaqSelectMenu } = require("../features/faq");
           const built = buildFaqMainEmbed(content.data);
           const selectMenu = buildFaqSelectMenu(content.data);
           
@@ -172,7 +174,7 @@ module.exports = {
           });
           
           await interaction.reply({
-            ephemeral: true,
+            flags: 64,
             embeds: [embed]
           });
           return;
@@ -194,8 +196,12 @@ module.exports = {
                 await interaction.showModal(modal);
               }
             } else {
-              await interaction.reply({ ephemeral: true, embeds: [errorEmbed("❌ Database not available.")] });
+              await interaction.reply({ flags: 64, embeds: [errorEmbed("❌ Database not available.")] });
             }
+            return;
+
+          case "modal":
+            await ticketManager.handleAnswerSubmission(interaction, ticketId);
             return;
 
           case "modal":
@@ -211,7 +217,7 @@ module.exports = {
               const ticket = await getDatabase().getTicketByChannelId(interaction.channel.id);
               if (ticket) {
                 await interaction.reply({
-                  ephemeral: true,
+                  flags: 64,
                   embeds: [brandEmbed({
                     title: "💰 Create Quote",
                     description: "Use the `/quote create` command to create a quote for this ticket."

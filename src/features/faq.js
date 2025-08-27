@@ -189,6 +189,8 @@ async function syncFaqMessage(client) {
 
 module.exports = { 
   syncFaqMessage, 
+  buildFaqMainEmbed,
+  buildFaqSelectMenu,
   buildFaqCategoryEmbed, 
   buildFaqButtons,
   readFaqContent 

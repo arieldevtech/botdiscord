@@ -146,6 +146,7 @@ module.exports = {
       }
 
       // 4) Catalog pagination and buy button
+      if (interaction.isButton() && interaction.customId.startsWith("catalog:")) {
         const parts = interaction.customId.split(":");
         const action = parts[1];
         const arg = parts[2];

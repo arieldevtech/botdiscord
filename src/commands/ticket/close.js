@@ -42,10 +42,18 @@ module.exports = {
 
       // Check permissions (support OR ticket creator)
       const isTicketOwner = ticket.users.discord_id === interaction.user.id;
-      if (!hasSupport && !isTicketOwner) {
+      
+      // Check if user is assigned to this ticket (for support members)
+      let isAssigned = false;
+      if (hasSupport) {
+        const assignment = await db.getTicketAssignment(ticket.id);
+        isAssigned = assignment && assignment.assignee_discord_id === interaction.user.id;
+      }
+      
+      if (!isTicketOwner && !isAssigned) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ You must have a support role or be the ticket creator to close it.")]
+          embeds: [errorEmbed("❌ You can only close tickets that are assigned to you or that you created.")]
         });
       }
 

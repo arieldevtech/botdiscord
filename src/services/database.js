@@ -403,6 +403,25 @@ class DatabaseService {
     }
   }
 
+  async getUserActiveTickets(assigneeDiscordId) {
+    try {
+      const { data, error } = await this.supabase
+        .from("assignments")
+        .select(`
+          *,
+          tickets!inner(id, status, channel_id, ticket_type, created_at)
+        `)
+        .eq("assignee_discord_id", assigneeDiscordId)
+        .in("tickets.status", ["open", "claimed", "in_progress", "waiting_payment"]);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      logger.error(`[DB] Failed to get user active tickets:`, error);
+      throw error;
+    }
+  }
+
   async getTicketAssignment(ticketId) {
     try {
       const { data, error } = await this.supabase

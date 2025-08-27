@@ -55,6 +55,26 @@ module.exports = {
         });
       }
 
+      // Check if target user already has an assigned ticket
+      const { data: userActiveTickets, error: activeError } = await db.supabase
+        .from("assignments")
+        .select(`
+          *,
+          tickets!inner(id, status, channel_id)
+        `)
+        .eq("assignee_discord_id", targetUser.id)
+        .in("tickets.status", ["open", "claimed", "in_progress", "waiting_payment"]);
+
+      if (activeError) throw activeError;
+
+      if (userActiveTickets && userActiveTickets.length > 0) {
+        const activeTicket = userActiveTickets[0];
+        return interaction.reply({
+          ephemeral: true,
+          embeds: [errorEmbed(`❌ ${targetUser} already has an active ticket assigned.\n\n**Their current ticket:** <#${activeTicket.tickets.channel_id}>\n\nThey must complete or close their current ticket before being assigned a new one.`)]
+        });
+      }
+
       // Assign ticket (automatically removes old assignment)
       await db.assignTicket(ticket.id, targetUser.id, 'support');
       

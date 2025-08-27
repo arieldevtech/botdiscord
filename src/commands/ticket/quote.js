@@ -34,10 +34,10 @@ module.exports = {
     const hasSupport = supportRoleIds.some(roleId => member.roles.cache.has(roleId));
     const hasAdmin = hasAdminRole(member) || member.permissions.has(PermissionFlagsBits.ManageGuild);
     
-    if (!hasSupport && !hasAdmin) {
+    if (!hasAdmin) {
       return interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ You must have a support role to use this command.")]
+        embeds: [errorEmbed("❌ You must have administrator permissions to use this command.")]
       });
     }
 
@@ -58,6 +58,17 @@ module.exports = {
           ephemeral: true,
           embeds: [errorEmbed("❌ This channel is not a valid ticket.")]
         });
+      }
+
+      // For non-admin support members, check if they are assigned to this ticket
+      if (!hasAdmin && hasSupport) {
+        const assignment = await db.getTicketAssignment(ticket.id);
+        if (!assignment || assignment.assignee_discord_id !== interaction.user.id) {
+          return interaction.reply({
+            ephemeral: true,
+            embeds: [errorEmbed("❌ You can only manage quotes for tickets assigned to you.")]
+          });
+        }
       }
 
       switch (subcommand) {

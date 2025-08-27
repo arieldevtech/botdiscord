@@ -177,6 +177,26 @@ class TicketManager {
       });
     }
 
+    // Check if user already has an assigned ticket
+    const { data: userActiveTickets, error: activeError } = await this.db.supabase
+      .from("assignments")
+      .select(`
+        *,
+        tickets!inner(id, status, channel_id)
+      `)
+      .eq("assignee_discord_id", interaction.user.id)
+      .in("tickets.status", ["open", "claimed", "in_progress", "waiting_payment"]);
+
+    if (activeError) throw activeError;
+
+    if (userActiveTickets && userActiveTickets.length > 0) {
+      const activeTicket = userActiveTickets[0];
+      return interaction.reply({
+        ephemeral: true,
+        embeds: [errorEmbed(`❌ You already have an active ticket assigned to you.\n\n**Current ticket:** <#${activeTicket.tickets.channel_id}>\n\nPlease complete or close your current ticket before claiming a new one.`)]
+      });
+    }
+
     try {
       const ticket = await this.db.getTicketByChannelId(interaction.channel.id);
       if (!ticket || ticket.status === 'closed') {

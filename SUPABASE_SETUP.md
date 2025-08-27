@@ -164,16 +164,29 @@ ALTER TABLE archives ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for service role (full access)
-CREATE POLICY "Service role full access on users" ON users FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on tickets" ON tickets FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on ticket_messages" ON ticket_messages FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on assignments" ON assignments FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on quotes" ON quotes FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on payments" ON payments FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on orders" ON orders FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on refunds" ON refunds FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on archives" ON archives FOR ALL TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY "Service role full access on audit_logs" ON audit_logs FOR ALL TO service_role USING (true) WITH CHECK (true);
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Service role full access on users" ON users;
+DROP POLICY IF EXISTS "Service role full access on tickets" ON tickets;
+DROP POLICY IF EXISTS "Service role full access on ticket_messages" ON ticket_messages;
+DROP POLICY IF EXISTS "Service role full access on assignments" ON assignments;
+DROP POLICY IF EXISTS "Service role full access on quotes" ON quotes;
+DROP POLICY IF EXISTS "Service role full access on payments" ON payments;
+DROP POLICY IF EXISTS "Service role full access on orders" ON orders;
+DROP POLICY IF EXISTS "Service role full access on refunds" ON refunds;
+DROP POLICY IF EXISTS "Service role full access on archives" ON archives;
+DROP POLICY IF EXISTS "Service role full access on audit_logs" ON audit_logs;
+
+-- Create policies for both service_role and anon (since bot might use anon key)
+CREATE POLICY "Bot full access on users" ON users FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on tickets" ON tickets FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on ticket_messages" ON ticket_messages FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on assignments" ON assignments FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on quotes" ON quotes FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on payments" ON payments FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on orders" ON orders FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on refunds" ON refunds FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on archives" ON archives FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
+CREATE POLICY "Bot full access on audit_logs" ON audit_logs FOR ALL TO service_role, anon USING (true) WITH CHECK (true);
 
 -- Create indexes for performance
 CREATE INDEX idx_users_discord_id ON users(discord_id);

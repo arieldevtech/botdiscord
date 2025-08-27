@@ -62,11 +62,11 @@ module.exports = {
           // Check for existing open ticket
           const existingTicket = await db.getOpenTicketByUserId(user.id);
           if (existingTicket) {
-            return interaction.reply({ ephemeral: true, embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")] });
+            return interaction.reply({ embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")], flags: 64 });
           }
         }
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: 64 });
         const channel = await createTicketChannel(interaction.guild, interaction.user, categoryKey);
         
         let ticket = null;
@@ -145,7 +145,7 @@ module.exports = {
             const userId = parts[3];
             if (interaction.user.id !== userId) {
               return interaction.reply({
-                ephemeral: true,
+                flags: 64,
                 embeds: [errorEmbed("❌ Seul l'utilisateur qui a initié la fermeture peut confirmer.")]
               });
             }
@@ -167,7 +167,7 @@ module.exports = {
             }
             return;
 
-          case "cancel_close":
+                flags: 64,
             await interaction.update({
               embeds: [brandEmbed({
                 title: "❌ Fermeture annulée",
@@ -184,14 +184,14 @@ module.exports = {
                 const quote = await getDatabase().getQuoteById(quoteId);
                 if (!quote) {
                   return interaction.reply({
-                    ephemeral: true,
+                    flags: 64,
                     embeds: [errorEmbed("❌ Devis non trouvé.")]
                   });
                 }
 
                 if (quote.status !== 'pending') {
                   return interaction.reply({
-                    ephemeral: true,
+                    flags: 64,
                     embeds: [errorEmbed("❌ Ce devis n'est plus disponible.")]
                   });
                 }
@@ -244,7 +244,7 @@ module.exports = {
               } catch (error) {
                 console.error('Erreur lors de l\'acceptation du devis:', error);
                 await interaction.reply({
-                  ephemeral: true,
+                  flags: 64,
                   embeds: [errorEmbed("❌ Erreur lors de l'acceptation du devis.")]
                 });
               }
@@ -275,7 +275,7 @@ module.exports = {
               } catch (error) {
                 console.error('Erreur lors du refus du devis:', error);
                 await interaction.reply({
-                  ephemeral: true,
+                  flags: 64,
                   embeds: [errorEmbed("❌ Erreur lors du refus du devis.")]
                 });
               }
@@ -380,14 +380,14 @@ module.exports = {
         const member = interaction.member;
         const hasPerms = command.permissions.every((p) => member.permissions?.has(PermissionFlagsBits[p] ?? p));
         if (!hasPerms) {
-          return interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "⚠️ Permission Denied", description: "You don't have the required permissions to run this command." })] });
+          return interaction.reply({ embeds: [brandEmbed({ title: "⚠️ Permission Denied", description: "You don't have the required permissions to run this command." })], flags: 64 });
         }
       }
 
       const cd = command.cooldown ?? 3;
       const gate = checkAndSetCooldown(client, interaction.user.id, command, cd);
       if (!gate.allowed) {
-        return interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "Please wait", description: `Please wait ${gate.remaining}s before trying again.` })] });
+        return interaction.reply({ embeds: [brandEmbed({ title: "Please wait", description: `Please wait ${gate.remaining}s before trying again.` })], flags: 64 });
       }
 
       await command.execute(interaction, client);
@@ -395,9 +395,9 @@ module.exports = {
       logger.error("interactionCreate handler error:", err);
       try {
         if (interaction.deferred || interaction.replied) {
-          await interaction.followUp({ ephemeral: true, embeds: [brandEmbed({ title: "❌ Error", description: "Something went wrong, please try again later." })] });
+          await interaction.followUp({ embeds: [brandEmbed({ title: "❌ Error", description: "Something went wrong, please try again later." })], flags: 64 });
         } else {
-          await interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "❌ Error", description: "Something went wrong, please try again later." })] });
+          await interaction.reply({ embeds: [brandEmbed({ title: "❌ Error", description: "Something went wrong, please try again later." })], flags: 64 });
         }
       } catch (_) {}
     }

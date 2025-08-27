@@ -19,7 +19,7 @@ module.exports = {
     if (!hasSupport) {
       return interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Vous devez avoir un rôle de support pour utiliser cette commande.")]
+        embeds: [errorEmbed("❌ You must have a support role to use this command.")]
       });
     }
 
@@ -29,14 +29,14 @@ module.exports = {
       if (!ticket) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce canal n'est pas un ticket valide.")]
+          embeds: [errorEmbed("❌ This channel is not a valid ticket.")]
         });
       }
 
       if (ticket.status === 'closed') {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce ticket est déjà fermé.")]
+          embeds: [errorEmbed("❌ This ticket is already closed.")]
         });
       }
 
@@ -45,7 +45,7 @@ module.exports = {
       if (existingAssignment) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce ticket est déjà pris en charge par un autre membre du support.")]
+          embeds: [errorEmbed("❌ This ticket is already being handled by another support member.")]
         });
       }
 
@@ -59,12 +59,12 @@ module.exports = {
 
       // Embed de confirmation
       const embed = brandEmbed({
-        title: "🎯 Ticket pris en charge",
-        description: `${interaction.user} a pris en charge ce ticket.`,
+        title: "🎯 Ticket Claimed",
+        description: `${interaction.user} has claimed this ticket.`,
         fields: [
-          { name: "Status", value: "**Claimed**", inline: true },
-          { name: "Assigné à", value: `<@${interaction.user.id}>`, inline: true },
-          { name: "Type", value: ticket.ticket_type, inline: true }
+          { name: "📋 Status", value: "**Claimed**", inline: true },
+          { name: "👤 Assigned to", value: `<@${interaction.user.id}>`, inline: true },
+          { name: "🎫 Type", value: ticket.ticket_type, inline: true }
         ]
       });
 
@@ -74,11 +74,11 @@ module.exports = {
       try {
         const client = await interaction.client.users.fetch(ticket.users.discord_id);
         const dmEmbed = brandEmbed({
-          title: "🎯 Votre ticket a été pris en charge",
-          description: `Un membre de notre équipe support s'occupe maintenant de votre demande.`,
+          title: "🎯 Your Ticket Has Been Claimed",
+          description: `A member of our support team is now handling your request.`,
           fields: [
-            { name: "Ticket", value: `<#${interaction.channel.id}>`, inline: true },
-            { name: "Assigné à", value: interaction.user.username, inline: true }
+            { name: "🎫 Ticket", value: `<#${interaction.channel.id}>`, inline: true },
+            { name: "👤 Assigned to", value: interaction.user.username, inline: true }
           ]
         });
         await client.send({ embeds: [dmEmbed] });
@@ -87,10 +87,10 @@ module.exports = {
       }
 
     } catch (error) {
-      console.error('Erreur lors du claim:', error);
+      console.error('Error during claim:', error);
       await interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Une erreur est survenue lors de la prise en charge du ticket.")]
+        embeds: [errorEmbed("❌ An error occurred while claiming the ticket.")]
       });
     }
   }

@@ -45,18 +45,18 @@ module.exports = {
       if (!hasSupport && !isTicketOwner) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Vous devez avoir un rôle de support ou être le créateur du ticket pour le fermer.")]
+          embeds: [errorEmbed("❌ You must have a support role or be the ticket creator to close it.")]
         });
       }
 
       // Embed de confirmation
       const confirmEmbed = brandEmbed({
-        title: "⚠️ Confirmation de fermeture",
-        description: `Êtes-vous sûr de vouloir fermer ce ticket ?\n\n**Raison :** ${reason}`,
+        title: "⚠️ Close Confirmation",
+        description: `Are you sure you want to close this ticket?\n\n**Reason:** ${reason}`,
         fields: [
-          { name: "Ticket", value: `<#${interaction.channel.id}>`, inline: true },
-          { name: "Type", value: ticket.ticket_type, inline: true },
-          { name: "Créé le", value: `<t:${Math.floor(new Date(ticket.created_at).getTime() / 1000)}:R>`, inline: true }
+          { name: "🎫 Ticket", value: `<#${interaction.channel.id}>`, inline: true },
+          { name: "📋 Type", value: ticket.ticket_type, inline: true },
+          { name: "📅 Created", value: `<t:${Math.floor(new Date(ticket.created_at).getTime() / 1000)}:R>`, inline: true }
         ]
       });
 
@@ -64,12 +64,12 @@ module.exports = {
         .addComponents(
           new ButtonBuilder()
             .setCustomId(`ticket:confirm_close:${ticket.id}:${interaction.user.id}`)
-            .setLabel("Confirmer la fermeture")
+            .setLabel("Confirm Close")
             .setStyle(ButtonStyle.Danger)
             .setEmoji("🔒"),
           new ButtonBuilder()
             .setCustomId("ticket:cancel_close")
-            .setLabel("Annuler")
+            .setLabel("Cancel")
             .setStyle(ButtonStyle.Secondary)
             .setEmoji("❌")
         );
@@ -77,10 +77,10 @@ module.exports = {
       await interaction.reply({ embeds: [confirmEmbed], components: [row] });
 
     } catch (error) {
-      console.error('Erreur lors de la fermeture:', error);
+      console.error('Error during close:', error);
       await interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Une erreur est survenue lors de la fermeture du ticket.")]
+        embeds: [errorEmbed("❌ An error occurred while closing the ticket.")]
       });
     }
   }

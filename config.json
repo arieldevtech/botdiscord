@@ -1,0 +1,121 @@
+{
+  "botName": "Korō Assistant",
+  "version": "1.1.0",
+  "color": "#0CC0DF",
+  "defaultLanguage": "en",
+  "guildId": "1407626539822223456",
+  "channels": {
+    "welcomeChannelId": "1407818296840945665",
+    "rulesChannelId": "1407818299399475270"
+  },
+  "roles": {
+    "autoRoleId": "1407818293141569798",
+    "adminRoleId": "1407818285927497900"
+  },
+  "embeds": {
+    "brand": {
+      "accentHex": "#FFFFFF",
+      "footerText": "© Bynex",
+      "thumbnailUrl": ""
+    }
+  },
+  "ticketHubChannelId": "1407818322703290532",
+  "productShowcaseChannelId": "1407818314759012494",
+  "supportRoleIds": ["1407818287126937685", "1407818285927497900"],
+  "archiveChannelId": "1407818327325409461",
+  "ticketCategories": {
+    "plugin_dev": {
+      "name": "Plugin Development",
+      "emoji": "📦",
+      "discordCategoryId": "1410010162957385788",
+      "introEmbed": {
+        "title": "📦 **Plugin Development Request**",
+        "questions": [
+          "What type of plugin do you need? (Describe main features and functionality)",
+          "Which Minecraft version and platform? (Spigot, Paper, Fabric, etc.)",
+          "Do you have any specific requirements or integrations needed?",
+          "What's your preferred timeline for completion?",
+          "What's your estimated budget range for this project?"
+        ]
+      }
+    },
+    "mc_build": {
+      "name": "Minecraft Build",
+      "emoji": "🏗️",
+      "discordCategoryId": "1410010214224232449",
+      "introEmbed": {
+        "title": "🏗️ **Minecraft Build Commission**",
+        "questions": [
+          "What type of build do you need? (Spawn, Hub, City, Castle, etc.)",
+          "What style or theme are you looking for? (Medieval, Modern, Fantasy, etc.)",
+          "What size should the build be? (Approximate dimensions or scale)",
+          "Do you have any reference images or examples of what you want?",
+          "When do you need this build completed by?"
+        ]
+      }
+    },
+    "partnership": {
+      "name": "Partnership",
+      "emoji": "🤝",
+      "discordCategoryId": "1407818377417986120",
+      "introEmbed": {
+        "title": "🤝 **Partnership Opportunity**",
+        "questions": [
+          "Tell us about your project, server, or organization",
+          "What type of partnership are you proposing?",
+          "What value can you bring to our community?",
+          "What are you looking for from us in return?",
+          "What's your proposed timeline and next steps?"
+        ]
+      }
+    },
+    "refund": {
+      "name": "Refund",
+      "emoji": "💸",
+      "discordCategoryId": "1410009992526037063",
+      "introEmbed": {
+        "title": "💸 **Refund Request**",
+        "questions": [
+          "What is your order/payment reference number or transaction ID?",
+          "What is the reason for requesting this refund?",
+          "When did you make the original purchase?",
+          "Please provide any additional details or evidence to support your request"
+        ]
+      }
+    },
+    "helpdesk": {
+      "name": "Questions / Helpdesk",
+      "emoji": "🆘",
+      "discordCategoryId": "1407818381180145784",
+      "introEmbed": {
+        "title": "🆘 **General Support & Questions**",
+        "questions": [
+          "What specific issue or question do you have?",
+          "What steps have you already tried to resolve this?",
+          "When did this issue first occur?",
+          "Do you have any error messages, screenshots, or logs to share?"
+        ]
+      }
+    }
+  },
+  "products": [
+    {
+      "sku": "plugin-basic",
+      "name": "Basic Plugin",
+      "priceEUR": 29,
+      "description": "Essential features to get started fast.",
+      "images": [],
+      "licensePolicy": "Single-server license",
+      "deliverableFile": ""
+    },
+    {
+      "sku": "build-spawn",
+      "name": "Minecraft Spawn",
+      "priceEUR": 79,
+      "description": "Professional spawn ready to use.",
+      "images": [],
+      "licensePolicy": "Single-use",
+      "deliverableFile": ""
+    }
+  ]
+}

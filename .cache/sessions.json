@@ -1,0 +1,16 @@
+{
+  "cs_test_a1yRsoUhPeb6FBQJxoIwznJkblKvLcSU3TAJtkmHx5rC0Zip4RgNhtCIXq": {
+    "discord_user_id": "1338966306220933241",
+    "discord_username": "ariel__dev",
+    "sku": "build-spawn",
+    "status": "pending",
+    "created_at": "2025-08-26T21:40:07.633Z"
+  },
+  "cs_test_a1wqLYxDqwkPco3j9mQUpUS6vXsof2CSEtBBio1jRxB6HTM3PTeSjfLYAM": {
+    "discord_user_id": "1338966306220933241",
+    "discord_username": "ariel__dev",
+    "sku": "plugin-basic",
+    "status": "pending",
+    "created_at": "2025-08-26T21:41:36.042Z"
+  }
+}

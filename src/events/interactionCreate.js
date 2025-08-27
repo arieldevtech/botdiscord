@@ -111,8 +111,75 @@ module.exports = {
         return;
       }
 
+      // 4) FAQ select menu and buttons
+      if (interaction.isStringSelectMenu() && interaction.customId === "faq:select") {
+        const categoryKey = interaction.values?.[0];
+        const { readFaqContent, buildFaqCategoryEmbed, buildFaqButtons } = require("../features/faq");
+        
+        const content = readFaqContent();
+        if (!content.data) {
+          return interaction.reply({
+            ephemeral: true,
+            embeds: [errorEmbed("❌ FAQ content not available.")]
+          });
+        }
+
+        const embed = buildFaqCategoryEmbed(content.data, categoryKey);
+        const buttons = buildFaqButtons();
+        
+        await interaction.reply({
+          ephemeral: true,
+          embeds: [embed],
+          components: [buttons]
+        });
+        return;
+      }
+
+      if (interaction.isButton() && interaction.customId.startsWith("faq:")) {
+        const action = interaction.customId.split(":")[1];
+        
+        if (action === "back") {
+          const { readFaqContent } = require("../features/faq");
+          const content = readFaqContent();
+          
+          if (!content.data) {
+            return interaction.reply({
+              ephemeral: true,
+              embeds: [errorEmbed("❌ FAQ content not available.")]
+            });
+          }
+
+          const { buildFaqMainEmbed, buildFaqSelectMenu } = require("../features/faq");
+          const built = buildFaqMainEmbed(content.data);
+          const selectMenu = buildFaqSelectMenu(content.data);
+          
+          await interaction.update({
+            embeds: [built.embed],
+            components: selectMenu ? [selectMenu] : []
+          });
+          return;
+        }
+        
+        if (action === "support") {
+          const embed = brandEmbed({
+            title: "🎫 Need More Help?",
+            description: "If you couldn't find the answer to your question in our FAQ, don't worry!\n\nOur support team is here to help you with any specific questions or issues you might have.",
+            fields: [
+              { name: "📍 How to get support", value: "Go to <#1407818322703290532> and select the appropriate category for your question.", inline: false },
+              { name: "⏱️ Response time", value: "We typically respond within 24 hours, often much faster!", inline: true },
+              { name: "💡 Tips", value: "Be as detailed as possible in your ticket for faster assistance.", inline: true }
+            ]
+          });
+          
+          await interaction.reply({
+            ephemeral: true,
+            embeds: [embed]
+          });
+          return;
+        }
+      }
+
       // 4) Gestion des tickets - Boutons et modales
-      if (interaction.customId && interaction.customId.startsWith("ticket:")) {
         const parts = interaction.customId.split(":");
         const action = parts[1];
         const ticketId = parts[2];

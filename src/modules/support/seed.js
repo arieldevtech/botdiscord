@@ -5,6 +5,7 @@ const { readJson, writeJson } = require("../../utils/cache");
 const { getDatabase } = require("../../services/database");
 const logger = require("../../utils/logger");
 const { TicketManager } = require("./ticketManager");
+const crypto = require("crypto");
 
 const CACHE_PATH = ".cache/support.json";
 
@@ -45,32 +46,63 @@ async function ensureTicketHub(client) {
   const channelId = config.ticketHubChannelId;
   if (!channelId) return logger.warn("[support] ticketHubChannelId is not configured");
 
-  const cache = readJson(CACHE_PATH, {});
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel) {
     logger.warn(`[support] Hub channel not found: ${channelId}`);
     return;
   }
 
+  const cache = readJson(CACHE_PATH, {});
   const embed = buildHubEmbed();
   const menu = buildHubMenu();
+  const hash = crypto.createHash("sha256").update(JSON.stringify({ embed: embed.toJSON(), menu: menu.toJSON() })).digest("hex");
 
-  if (cache.hubMessageId) {
+  // Check if content changed
+  const changed = cache.lastHubHash !== hash;
+
+  if (!changed && cache.hubMessageId) {
     const msg = await channel.messages.fetch(cache.hubMessageId).catch(() => null);
     if (msg) {
-      try {
-        await msg.edit({ embeds: [embed], components: [menu] });
-        logger.success("[support] Ticket Hub updated");
-        return;
-      } catch (e) {
-        logger.warn("[support] Failed to update hub, recreating", e?.message);
-      }
+      logger.info("[support] Ticket Hub unchanged, keeping current message");
+      return;
     }
   }
 
-  const message = await channel.send({ embeds: [embed], components: [menu] });
-  writeJson(CACHE_PATH, { ...cache, hubMessageId: message.id });
-  logger.success(`[support] Ticket Hub published (${message.id})`);
+  // Helper to post & pin
+  const postHub = async () => {
+    try {
+      const message = await channel.send({ embeds: [embed], components: [menu] });
+      try { await message.pin(); } catch (_) {}
+      writeJson(CACHE_PATH, { ...cache, hubMessageId: message.id, lastHubHash: hash });
+      logger.success(`[support] Ticket Hub published (${message.id})`);
+    } catch (e) {
+      logger.error("[support] Failed to post hub:", e);
+    }
+  };
+
+  if (!cache.hubMessageId) {
+    await postHub();
+    return;
+  }
+
+  // Check if existing message still exists
+  const existing = await channel.messages.fetch(cache.hubMessageId).catch(() => null);
+  if (!existing) {
+    await postHub();
+    return;
+  }
+
+  // Ensure it's pinned
+  try { if (!existing.pinned) await existing.pin(); } catch (_) {}
+
+  // Edit existing message
+  try {
+    await existing.edit({ embeds: [embed], components: [menu] });
+    writeJson(CACHE_PATH, { ...cache, hubMessageId: existing.id, lastHubHash: hash });
+    logger.success("[support] Ticket Hub updated");
+  } catch (e) {
+    logger.error("[support] Failed to edit hub:", e);
+  }
 }
 
 async function createTicketChannel(guild, user, categoryKey) {

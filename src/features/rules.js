@@ -66,8 +66,10 @@ async function syncRulesMessage(client) {
     logger.warn("[rules] channels.rulesChannelId is not configured; skipping rules sync");
     return;
   }
+  
   const content = readRulesContent();
   const hash = sha256(content.raw || "");
+  
   let built;
   if (content.type === "json" && content.data) built = buildRulesEmbedFromJson(content.data);
   else if (content.type === "md") built = buildRulesEmbedFromMd(content.raw);
@@ -76,7 +78,12 @@ async function syncRulesMessage(client) {
   await syncFixedEmbed(client, {
     slug: "rules",
     channelId,
-    payload: { hash, version: built.version, lastUpdated: built.lastUpdated, embed: built.embed },
+    payload: { 
+      hash, 
+      version: built.version, 
+      lastUpdated: built.lastUpdated, 
+      embed: built.embed 
+    },
   });
 }
 

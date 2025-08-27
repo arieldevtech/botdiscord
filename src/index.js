@@ -9,6 +9,7 @@ const { loadEvents } = require("./handlers/events");
 const { registerGuildCommands } = require("./handlers/registerCommands");
 const { getDatabase } = require("./services/database");
 const { syncRulesMessage } = require("./features/rules");
+const { syncFaqMessage } = require("./features/faq");
 const { ensureTicketHub, validateTicketCategories } = require("./modules/support/seed");
 const { ensureProductShowcase } = require("./modules/catalog/seed");
 const { startServer } = require("./payments/stripeServer");
@@ -106,6 +107,7 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
     // After login and cache ready, run rules sync and start Stripe server
     client.once("ready", async () => {
       await syncRulesMessage(client);
+      await syncFaqMessage(client);
       await ensureTicketHub(client);
       await ensureProductShowcase(client);
       await validateTicketCategories(client);

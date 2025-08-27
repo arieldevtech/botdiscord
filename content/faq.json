@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "title": "Frequently Asked Questions",
+  "lastUpdated": "2025-01-27T12:00:00Z",
+  "sections": [
+    {
+      "name": "🎫 Support & Tickets",
+      "emoji": "🎫",
+      "items": [
+        {
+          "question": "How do I create a support ticket?",
+          "answer": "Go to <#1407818322703290532> and select the appropriate category from the dropdown menu. You can only have one active ticket at a time."
+        },
+        {
+          "question": "How long does it take to get a response?",
+          "answer": "Our support team typically responds within 24 hours. For urgent matters, we aim to respond within a few hours during business hours."
+        },
+        {
+          "question": "Can I have multiple tickets open at once?",
+          "answer": "No, you can only have one active ticket at a time. Please close your current ticket before opening a new one."
+        }
+      ]
+    },
+    {
+      "name": "💰 Payments & Orders",
+      "emoji": "💰",
+      "items": [
+        {
+          "question": "What payment methods do you accept?",
+          "answer": "We accept all major credit cards through Stripe, including Visa, Mastercard, and American Express. All payments are secure and encrypted."
+        },
+        {
+          "question": "How do I get my purchase after payment?",
+          "answer": "After successful payment, you'll receive a direct message with your download link and license key (if applicable). Downloads are available for 24 hours."
+        },
+        {
+          "question": "Can I get a refund?",
+          "answer": "Yes, we offer refunds within 7 days of purchase. Open a refund ticket in <#1407818322703290532> with your order details."
+        }
+      ]
+    },
+    {
+      "name": "🔧 Development Services",
+      "emoji": "🔧",
+      "items": [
+        {
+          "question": "What types of plugins do you develop?",
+          "answer": "We develop custom Minecraft plugins for Spigot, Paper, and other platforms. From simple utilities to complex systems - we handle projects of all sizes."
+        },
+        {
+          "question": "How does the development process work?",
+          "answer": "1. Open a Plugin Development ticket\n2. Describe your requirements\n3. Receive a custom quote\n4. Pay deposit (if required)\n5. Development begins\n6. Testing and delivery"
+        },
+        {
+          "question": "Do you provide support after delivery?",
+          "answer": "Yes! We provide 30 days of free support and bug fixes after delivery. Extended support packages are also available."
+        }
+      ]
+    },
+    {
+      "name": "🏗️ Building Services",
+      "emoji": "🏗️",
+      "items": [
+        {
+          "question": "What building styles do you offer?",
+          "answer": "We specialize in Medieval, Modern, Fantasy, and Futuristic builds. Our team can adapt to any style or theme you have in mind."
+        },
+        {
+          "question": "What's included in a build commission?",
+          "answer": "Complete builds include the structure, interior design, landscaping, and a world download. We also provide screenshots and a brief description."
+        },
+        {
+          "question": "Can you work with existing worlds?",
+          "answer": "Absolutely! We can integrate new builds into your existing world or modify existing structures to match your vision."
+        }
+      ]
+    },
+    {
+      "name": "👑 VIP System",
+      "emoji": "👑",
+      "items": [
+        {
+          "question": "How does the VIP system work?",
+          "answer": "VIP levels are based on total spending:\n🥉 **Bronze** - Default\n🥈 **Silver** - €100+ spent\n🥇 **Gold** - €200+ spent\n💎 **Diamond** - €500+ spent"
+        },
+        {
+          "question": "What benefits do VIP members get?",
+          "answer": "VIP members enjoy priority support, exclusive discounts, early access to new products, and special recognition in the community."
+        },
+        {
+          "question": "How can I check my VIP status?",
+          "answer": "Use the `/profile` command to see your current VIP level, total spending, and purchase history."
+        }
+      ]
+    }
+  ]
+}

@@ -25,7 +25,7 @@ async function fetchMessageById(channel, id) {
 /**
  * Generic fixed-embed sync utility that pins a single message and edits it when content changes.
  * @param {import('discord.js').Client} client
- * @param {{ slug: string, channelId: string, payload: { hash: string, version?: string|number, lastUpdated?: string, embed: any } }} options
+ * @param {{ slug: string, channelId: string, payload: { hash: string, version?: string|number, lastUpdated?: string, embed: any, components?: any[] } }} options
  */
 async function syncFixedEmbed(client, { slug, channelId, payload }) {
   if (!channelId) {
@@ -41,8 +41,14 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
   const cachePath = cacheFileFor(slug);
   const cache = readJson(cachePath, {});
 
-  const { hash, version, lastUpdated, embed } = payload;
+  const { hash, version, lastUpdated, embed, components } = payload;
   const changed = cache.lastAppliedHash !== hash;
+
+  // Prepare message options
+  const messageOptions = { embeds: [embed] };
+  if (components && components.length > 0) {
+    messageOptions.components = components;
+  }
 
   // Si pas de changement et message existe, ne rien faire
   if (!changed && cache.messageId) {
@@ -56,7 +62,7 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
   // Helper to post & pin, then persist cache
   const postAndPin = async () => {
     try {
-      const message = await channel.send({ embeds: [embed] });
+      const message = await channel.send(messageOptions);
       try { await message.pin(); } catch (_) {}
       writeJson(cachePath, { messageId: message.id, lastAppliedHash: hash, lastAppliedVersion: version ?? null, lastUpdated: lastUpdated || new Date().toISOString() });
       logger.success(`[fixedEmbeds:${slug}] Posted and pinned message (${message.id})`);
@@ -83,7 +89,7 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
 
   // Edit existing message content
   try {
-    await existing.edit({ embeds: [embed] });
+    await existing.edit(messageOptions);
     writeJson(cachePath, { messageId: existing.id, lastAppliedHash: hash, lastAppliedVersion: version ?? null, lastUpdated: lastUpdated || new Date().toISOString() });
     logger.success(`[fixedEmbeds:${slug}] Edited pinned message (${existing.id})`);
   } catch (e) {

@@ -24,6 +24,8 @@ const missing = REQUIRED_ENV.filter((k) => !process.env[k] || String(process.env
 if (missing.length) {
   logger.warn("Environment validation failed. Missing/placeholder:", missing.join(", "));
   logger.warn("Create a .env file based on .env.example and fill real values.");
+  logger.error("Cannot start bot without valid Discord credentials. Exiting...");
+  process.exit(1);
 }
 
 // 2) Create client (add more intents for features)

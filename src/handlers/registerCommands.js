@@ -8,9 +8,16 @@ async function registerGuildCommands(commandsJson) {
 
   if (!token || !clientId || !guildId) {
     logger.warn("Cannot register guild commands: missing TOKEN/CLIENT_ID/GUILD_ID");
+    logger.error("Discord credentials are required for command registration");
     return;
   }
 
+  // Additional validation for placeholder values
+  if (token.includes("your_") || clientId.includes("your_") || guildId.includes("your_")) {
+    logger.error("Cannot register guild commands: environment variables contain placeholder values");
+    logger.error("Please update your .env file with real Discord credentials");
+    return;
+  }
   const rest = new REST({ version: "10" }).setToken(token);
 
   try {

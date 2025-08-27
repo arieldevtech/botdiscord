@@ -37,13 +37,19 @@ function buildServicesEmbedFromJson(json) {
   const description = [
     "🚀 **Transform Your Vision Into Reality**",
     "",
-    "We specialize in creating exceptional Minecraft experiences tailored to your community's needs. From custom plugins to complete server solutions, our team delivers professional-grade services that exceed expectations.",
+    "We offer **three core services** to bring your Minecraft vision to life. Whether you need custom development, professional builds, or a complete server solution, our expert team delivers exceptional results that exceed expectations.",
+    "",
+    "🎯 **Our Three Main Services:**",
+    "",
+    "🔧 **Plugin Development** — Custom Minecraft plugins of any type and complexity",
+    "🏗️ **Minecraft Building** — Professional builds for any style or purpose", 
+    "🎮 **Complete Server Setup** — Full server solutions with all plugins + maps included",
     "",
     "💎 **Why Choose Us?**",
-    "• **Expert Developers** — Years of experience in Minecraft development",
-    "• **Custom Solutions** — Every project is unique and tailored to you",
+    "• **Expert Team** — Years of experience in Minecraft development & building",
+    "• **Complete Solutions** — From single plugins to entire server ecosystems",
     "• **Quality Guarantee** — We stand behind our work with ongoing support",
-    "• **Fast Delivery** — Professional results within agreed timelines"
+    "• **Turnkey Service** — Ready-to-launch servers with everything included"
   ].join("\n");
 
   const fields = [];
@@ -58,13 +64,15 @@ function buildServicesEmbedFromJson(json) {
 
   // Add call-to-action field
   fields.push({
-    name: "🎯 **Ready to Get Started?**",
+    name: "🚀 **Ready to Transform Your Server?**",
     value: [
-      "Ready to bring your ideas to life? Our team is here to help!",
+      "Choose from our three specialized services and let us bring your vision to life:",
       "",
-      "📞 **Contact us:** Open a ticket in <#1407818322703290532>",
-      "💬 **Free Consultation:** Discuss your project requirements",
-      "📋 **Custom Quote:** Get a personalized estimate for your needs"
+      "🎫 **Get Started:** Open a ticket in <#1407818322703290532>",
+      "💬 **Free Consultation:** Discuss your project requirements with our experts",
+      "📋 **Custom Quote:** Receive a detailed estimate tailored to your needs",
+      "",
+      "**From simple plugins to complete server ecosystems — we've got you covered!**"
     ].join("\n"),
     inline: false
   });

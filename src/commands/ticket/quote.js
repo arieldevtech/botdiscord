@@ -11,17 +11,17 @@ function hasAdminRole(member) {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("quote")
-    .setDescription("Gérer les devis")
+    .setDescription("Manage quotes for tickets")
     .addSubcommand(sub =>
       sub.setName("create")
-        .setDescription("Créer un devis pour ce ticket")
-        .addIntegerOption(opt => opt.setName("montant").setDescription("Montant en euros").setRequired(true))
-        .addStringOption(opt => opt.setName("description").setDescription("Description du devis").setRequired(true))
-        .addIntegerOption(opt => opt.setName("acompte").setDescription("Acompte en euros (optionnel)").setRequired(false))
+        .setDescription("Create a quote for this ticket")
+        .addIntegerOption(opt => opt.setName("amount").setDescription("Amount in euros").setRequired(true))
+        .addStringOption(opt => opt.setName("description").setDescription("Quote description").setRequired(true))
+        .addIntegerOption(opt => opt.setName("deposit").setDescription("Deposit amount in euros (optional)").setRequired(false))
     )
     .addSubcommand(sub =>
       sub.setName("list")
-        .setDescription("Lister les devis de ce ticket")
+        .setDescription("List quotes for this ticket")
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
   cooldown: 5,
@@ -30,65 +30,65 @@ module.exports = {
     const member = interaction.member;
     const supportRoleIds = config.supportRoleIds || [];
     
-    // Vérifier si l'utilisateur a un rôle de support OU admin
+    // Check if user has support role OR admin
     const hasSupport = supportRoleIds.some(roleId => member.roles.cache.has(roleId));
     const hasAdmin = hasAdminRole(member) || member.permissions.has(PermissionFlagsBits.ManageGuild);
     
     if (!hasSupport && !hasAdmin) {
       return interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Vous devez avoir un rôle de support pour utiliser cette commande.")]
+        embeds: [errorEmbed("❌ You must have a support role to use this command.")]
       });
     }
 
     if (!db.isEnabled()) {
       return interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Base de données non disponible.")]
+        embeds: [errorEmbed("❌ Database not available.")]
       });
     }
 
     const subcommand = interaction.options.getSubcommand();
 
     try {
-      // Récupérer le ticket associé à ce canal
+      // Get ticket associated with this channel
       const ticket = await db.getTicketByChannelId(interaction.channel.id);
       if (!ticket) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce canal n'est pas un ticket valide.")]
+          embeds: [errorEmbed("❌ This channel is not a valid ticket.")]
         });
       }
 
       switch (subcommand) {
         case "create": {
-          const montant = interaction.options.getInteger("montant");
+          const amount = interaction.options.getInteger("amount");
           const description = interaction.options.getString("description");
-          const acompte = interaction.options.getInteger("acompte") || 0;
+          const deposit = interaction.options.getInteger("deposit") || 0;
 
-          if (montant <= 0) {
+          if (amount <= 0) {
             return interaction.reply({
               ephemeral: true,
-              embeds: [errorEmbed("❌ Le montant doit être supérieur à 0.")]
+              embeds: [errorEmbed("❌ Amount must be greater than 0.")]
             });
           }
 
-          if (acompte < 0 || acompte >= montant) {
+          if (deposit < 0 || deposit >= amount) {
             return interaction.reply({
               ephemeral: true,
-              embeds: [errorEmbed("❌ L'acompte doit être entre 0 et le montant total.")]
+              embeds: [errorEmbed("❌ Deposit must be between 0 and the total amount.")]
             });
           }
 
-          // Créer le devis en base
+          // Create quote in database
           const { data: quote, error } = await db.supabase
             .from("quotes")
             .insert({
               ticket_id: ticket.id,
-              amount_cents: montant * 100,
+              amount_cents: amount * 100,
               currency: 'EUR',
               description: description,
-              deposit_cents: acompte * 100,
+              deposit_cents: deposit * 100,
               status: 'pending'
             })
             .select()
@@ -96,55 +96,55 @@ module.exports = {
 
           if (error) throw error;
 
-          // Créer les boutons d'action
+          // Create action buttons
           const row = new ActionRowBuilder()
             .addComponents(
               new ButtonBuilder()
                 .setCustomId(`ticket:accept_quote:${quote.id}`)
-                .setLabel("Accepter le devis")
+                .setLabel("Accept Quote")
                 .setStyle(ButtonStyle.Success)
                 .setEmoji("✅"),
               new ButtonBuilder()
                 .setCustomId(`ticket:reject_quote:${quote.id}`)
-                .setLabel("Refuser le devis")
+                .setLabel("Reject Quote")
                 .setStyle(ButtonStyle.Danger)
                 .setEmoji("❌")
             );
 
           const embed = brandEmbed({
-            title: "💰 Nouveau devis",
-            description: `Un devis a été créé pour ce ticket.`,
+            title: "💰 New Quote Created",
+            description: `A quote has been created for this ticket.`,
             fields: [
-              { name: "💰 Montant", value: `**€${montant}**`, inline: true },
-              { name: "💳 Acompte", value: acompte > 0 ? `**€${acompte}**` : "Aucun", inline: true },
+              { name: "💰 Amount", value: `**€${amount}**`, inline: true },
+              { name: "💳 Deposit", value: deposit > 0 ? `**€${deposit}**` : "None", inline: true },
               { name: "📝 Description", value: description, inline: false },
-              { name: "⏰ Expire le", value: `<t:${Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000)}:F>`, inline: true }
+              { name: "⏰ Expires", value: `<t:${Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000)}:F>`, inline: true }
             ]
           });
 
           await interaction.reply({ embeds: [embed], components: [row] });
 
-          // Notifier le client par DM
+          // Notify client via DM
           try {
             const client = await interaction.client.users.fetch(ticket.users.discord_id);
             const dmEmbed = brandEmbed({
-              title: "💰 Nouveau devis reçu",
-              description: `Vous avez reçu un devis pour votre ticket.`,
+              title: "💰 New Quote Received",
+              description: `You have received a quote for your ticket.`,
               fields: [
                 { name: "Ticket", value: `<#${interaction.channel.id}>`, inline: true },
-                { name: "Montant", value: `€${montant}`, inline: true },
+                { name: "Amount", value: `€${amount}`, inline: true },
                 { name: "Description", value: description, inline: false }
               ]
             });
             await client.send({ embeds: [dmEmbed] });
           } catch (e) {
-            // Ignore les erreurs de DM
+            // Ignore DM errors
           }
 
-          // Log de l'action
+          // Log action
           await db.logAction('quote_created', interaction.user.id, 'quote', quote.id, {
             ticketId: ticket.id,
-            amount: montant,
+            amount: amount,
             description: description
           });
 
@@ -163,7 +163,7 @@ module.exports = {
           if (!quotes || quotes.length === 0) {
             return interaction.reply({
               ephemeral: true,
-              embeds: [errorEmbed("❌ Aucun devis trouvé pour ce ticket.")]
+              embeds: [errorEmbed("❌ No quotes found for this ticket.")]
             });
           }
 
@@ -171,15 +171,15 @@ module.exports = {
             name: `💰 €${(q.amount_cents / 100).toFixed(2)} - ${q.status.toUpperCase()}`,
             value: [
               `**Description:** ${q.description}`,
-              `**Créé:** <t:${Math.floor(new Date(q.created_at).getTime() / 1000)}:R>`,
-              q.accepted_at ? `**Accepté:** <t:${Math.floor(new Date(q.accepted_at).getTime() / 1000)}:R>` : null,
-              `**Expire:** <t:${Math.floor(new Date(q.expires_at).getTime() / 1000)}:R>`
+              `**Created:** <t:${Math.floor(new Date(q.created_at).getTime() / 1000)}:R>`,
+              q.accepted_at ? `**Accepted:** <t:${Math.floor(new Date(q.accepted_at).getTime() / 1000)}:R>` : null,
+              `**Expires:** <t:${Math.floor(new Date(q.expires_at).getTime() / 1000)}:R>`
             ].filter(Boolean).join("\n"),
             inline: false
           }));
 
           const embed = brandEmbed({
-            title: `💰 Devis du ticket (${quotes.length})`,
+            title: `💰 Ticket Quotes (${quotes.length})`,
             fields: fields.slice(0, 5)
           });
 
@@ -188,10 +188,10 @@ module.exports = {
         }
       }
     } catch (error) {
-      console.error('Erreur lors de la gestion du devis:', error);
+      console.error('Error managing quote:', error);
       await interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Une erreur est survenue lors de la gestion du devis.")]
+        embeds: [errorEmbed("❌ An error occurred while managing the quote.")]
       });
     }
   }

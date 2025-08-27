@@ -6,10 +6,10 @@ const config = require("../../../config.json");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("close")
-    .setDescription("Fermer ce ticket")
+    .setDescription("Close this ticket")
     .addStringOption(option =>
-      option.setName("raison")
-        .setDescription("Raison de la fermeture")
+      option.setName("reason")
+        .setDescription("Reason for closing")
         .setRequired(false)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
@@ -17,30 +17,30 @@ module.exports = {
   async execute(interaction) {
     const db = getDatabase();
     const member = interaction.member;
-    const reason = interaction.options.getString("raison") || "Aucune raison spécifiée";
+    const reason = interaction.options.getString("reason") || "No reason specified";
     const supportRoleIds = config.supportRoleIds || [];
     
-    // Vérifier si l'utilisateur a un rôle de support OU si c'est le créateur du ticket
+    // Check if user has support role OR is ticket creator
     const hasSupport = supportRoleIds.some(roleId => member.roles.cache.has(roleId));
     
     try {
-      // Récupérer le ticket associé à ce canal
+      // Get ticket associated with this channel
       const ticket = await db.getTicketByChannelId(interaction.channel.id);
       if (!ticket) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce canal n'est pas un ticket valide.")]
+          embeds: [errorEmbed("❌ This channel is not a valid ticket.")]
         });
       }
 
       if (ticket.status === 'closed') {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce ticket est déjà fermé.")]
+          embeds: [errorEmbed("❌ This ticket is already closed.")]
         });
       }
 
-      // Vérifier les permissions (support OU créateur du ticket)
+      // Check permissions (support OR ticket creator)
       const isTicketOwner = ticket.users.discord_id === interaction.user.id;
       if (!hasSupport && !isTicketOwner) {
         return interaction.reply({
@@ -49,7 +49,7 @@ module.exports = {
         });
       }
 
-      // Embed de confirmation
+      // Confirmation embed
       const confirmEmbed = brandEmbed({
         title: "⚠️ Close Confirmation",
         description: `Are you sure you want to close this ticket?\n\n**Reason:** ${reason}`,

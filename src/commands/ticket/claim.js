@@ -6,7 +6,7 @@ const config = require("../../../config.json");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("claim")
-    .setDescription("Prendre en charge ce ticket")
+    .setDescription("Claim this ticket")
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
   cooldown: 5,
   async execute(interaction) {
@@ -14,7 +14,7 @@ module.exports = {
     const member = interaction.member;
     const supportRoleIds = config.supportRoleIds || [];
     
-    // Vérifier si l'utilisateur a un rôle de support
+    // Check if user has support role
     const hasSupport = supportRoleIds.some(roleId => member.roles.cache.has(roleId));
     if (!hasSupport) {
       return interaction.reply({
@@ -24,7 +24,7 @@ module.exports = {
     }
 
     try {
-      // Récupérer le ticket associé à ce canal
+      // Get ticket associated with this channel
       const ticket = await db.getTicketByChannelId(interaction.channel.id);
       if (!ticket) {
         return interaction.reply({
@@ -40,7 +40,7 @@ module.exports = {
         });
       }
 
-      // Vérifier si le ticket est déjà assigné
+      // Check if ticket is already assigned
       const existingAssignment = await db.getTicketAssignment(ticket.id);
       if (existingAssignment) {
         return interaction.reply({
@@ -49,15 +49,15 @@ module.exports = {
         });
       }
 
-      // Assigner le ticket
+      // Assign ticket
       await db.assignTicket(ticket.id, interaction.user.id, 'support');
       
-      // Log de l'action
+      // Log action
       await db.logAction('ticket_claimed', interaction.user.id, 'ticket', ticket.id, {
         channelId: interaction.channel.id
       });
 
-      // Embed de confirmation
+      // Confirmation embed
       const embed = brandEmbed({
         title: "🎯 Ticket Claimed",
         description: `${interaction.user} has claimed this ticket.`,
@@ -70,7 +70,7 @@ module.exports = {
 
       await interaction.reply({ embeds: [embed] });
 
-      // Notifier le client par DM
+      // Notify client via DM
       try {
         const client = await interaction.client.users.fetch(ticket.users.discord_id);
         const dmEmbed = brandEmbed({
@@ -83,7 +83,7 @@ module.exports = {
         });
         await client.send({ embeds: [dmEmbed] });
       } catch (e) {
-        // Ignore les erreurs de DM
+        // Ignore DM errors
       }
 
     } catch (error) {

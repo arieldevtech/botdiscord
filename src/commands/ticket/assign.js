@@ -6,10 +6,10 @@ const config = require("../../../config.json");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("assign")
-    .setDescription("Assigner ce ticket à un membre du support")
+    .setDescription("Assign this ticket to a support member")
     .addUserOption(option =>
-      option.setName("membre")
-        .setDescription("Membre du support à assigner")
+      option.setName("member")
+        .setDescription("Support member to assign")
         .setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
@@ -17,87 +17,87 @@ module.exports = {
   async execute(interaction) {
     const db = getDatabase();
     const member = interaction.member;
-    const targetUser = interaction.options.getUser("membre");
+    const targetUser = interaction.options.getUser("member");
     const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
     const supportRoleIds = config.supportRoleIds || [];
     
-    // Vérifier si l'utilisateur a un rôle de support
+    // Check if user has support role
     const hasSupport = supportRoleIds.some(roleId => member.roles.cache.has(roleId));
     if (!hasSupport) {
       return interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Vous devez avoir un rôle de support pour utiliser cette commande.")]
+        embeds: [errorEmbed("❌ You must have a support role to use this command.")]
       });
     }
 
-    // Vérifier si le membre cible a un rôle de support
+    // Check if target member has support role
     if (!targetMember || !supportRoleIds.some(roleId => targetMember.roles.cache.has(roleId))) {
       return interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Le membre sélectionné doit avoir un rôle de support.")]
+        embeds: [errorEmbed("❌ The selected member must have a support role.")]
       });
     }
 
     try {
-      // Récupérer le ticket associé à ce canal
+      // Get ticket associated with this channel
       const ticket = await db.getTicketByChannelId(interaction.channel.id);
       if (!ticket) {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce canal n'est pas un ticket valide.")]
+          embeds: [errorEmbed("❌ This channel is not a valid ticket.")]
         });
       }
 
       if (ticket.status === 'closed') {
         return interaction.reply({
           ephemeral: true,
-          embeds: [errorEmbed("❌ Ce ticket est déjà fermé.")]
+          embeds: [errorEmbed("❌ This ticket is already closed.")]
         });
       }
 
-      // Assigner le ticket (cela supprime l'ancienne assignation automatiquement)
+      // Assign ticket (automatically removes old assignment)
       await db.assignTicket(ticket.id, targetUser.id, 'support');
       
-      // Log de l'action
+      // Log action
       await db.logAction('ticket_assigned', interaction.user.id, 'ticket', ticket.id, {
         channelId: interaction.channel.id,
         assignedTo: targetUser.id
       });
 
-      // Embed de confirmation
+      // Confirmation embed
       const embed = brandEmbed({
-        title: "🔄 Ticket réassigné",
-        description: `Ce ticket a été assigné à ${targetUser}.`,
+        title: "🔄 Ticket Reassigned",
+        description: `This ticket has been assigned to ${targetUser}.`,
         fields: [
-          { name: "Assigné par", value: `<@${interaction.user.id}>`, inline: true },
-          { name: "Assigné à", value: `<@${targetUser.id}>`, inline: true },
+          { name: "Assigned by", value: `<@${interaction.user.id}>`, inline: true },
+          { name: "Assigned to", value: `<@${targetUser.id}>`, inline: true },
           { name: "Type", value: ticket.ticket_type, inline: true }
         ]
       });
 
       await interaction.reply({ embeds: [embed] });
 
-      // Notifier le client par DM
+      // Notify client via DM
       try {
         const client = await interaction.client.users.fetch(ticket.users.discord_id);
         const dmEmbed = brandEmbed({
-          title: "🔄 Votre ticket a été réassigné",
-          description: `Votre ticket a été assigné à un nouveau membre de notre équipe support.`,
+          title: "🔄 Your Ticket Has Been Reassigned",
+          description: `Your ticket has been assigned to a new member of our support team.`,
           fields: [
             { name: "Ticket", value: `<#${interaction.channel.id}>`, inline: true },
-            { name: "Nouveau assigné", value: targetUser.username, inline: true }
+            { name: "New Assignee", value: targetUser.username, inline: true }
           ]
         });
         await client.send({ embeds: [dmEmbed] });
       } catch (e) {
-        // Ignore les erreurs de DM
+        // Ignore DM errors
       }
 
     } catch (error) {
-      console.error('Erreur lors de l\'assignation:', error);
+      console.error('Error during assignment:', error);
       await interaction.reply({
         ephemeral: true,
-        embeds: [errorEmbed("❌ Une erreur est survenue lors de l'assignation du ticket.")]
+        embeds: [errorEmbed("❌ An error occurred while assigning the ticket.")]
       });
     }
   }

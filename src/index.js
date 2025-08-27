@@ -10,6 +10,7 @@ const { registerGuildCommands } = require("./handlers/registerCommands");
 const { getDatabase } = require("./services/database");
 const { syncRulesMessage } = require("./features/rules");
 const { syncFaqMessage } = require("./features/faq");
+const { syncServicesMessage } = require("./features/services");
 const { ensureTicketHub, validateTicketCategories } = require("./modules/support/seed");
 const { ensureProductShowcase } = require("./modules/catalog/seed");
 const { startServer } = require("./payments/stripeServer");
@@ -108,6 +109,7 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
     client.once("ready", async () => {
       await syncRulesMessage(client);
       await syncFaqMessage(client);
+      await syncServicesMessage(client);
       await ensureTicketHub(client);
       await ensureProductShowcase(client);
       await validateTicketCategories(client);

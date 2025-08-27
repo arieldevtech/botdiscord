@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "title": "Our Professional Services",
+  "lastUpdated": "2025-01-27T15:00:00Z",
+  "sections": [
+    {
+      "name": "🔧 Development Services",
+      "emoji": "🔧",
+      "items": [
+        "**Minecraft Plugins** — Custom plugins tailored to your server's needs",
+        "**BungeeCord Solutions** — Network management and proxy configurations",
+        "**API Integrations** — Connect your server with external services",
+        "**Database Systems** — MySQL, SQLite, and MongoDB implementations",
+        "**Performance Optimization** — Code review and server performance tuning",
+        "**Custom Commands** — Unique commands and features for your community"
+      ]
+    },
+    {
+      "name": "🏗️ Minecraft Building",
+      "emoji": "🏗️",
+      "items": [
+        "**Spawn Areas** — Professional spawn designs that welcome players",
+        "**Hub Worlds** — Central areas connecting multiple game modes",
+        "**Adventure Maps** — Custom storylines and challenging quests",
+        "**PvP Arenas** — Competitive battlegrounds and tournament venues",
+        "**Themed Builds** — Medieval, Modern, Fantasy, Sci-Fi, and more",
+        "**Terraforming** — Natural landscapes and custom terrain generation"
+      ]
+    },
+    {
+      "name": "🎮 Complete Server Solutions",
+      "emoji": "🎮",
+      "items": [
+        "**Mini-Games Servers** — Bed Wars, Sky Wars, Murder Mystery, and more",
+        "**Factions Gameplay** — Territory control with custom features",
+        "**Survival Worlds** — Enhanced vanilla experience with quality-of-life improvements",
+        "**SkyBlock Networks** — Island progression with unique challenges",
+        "**Prison Servers** — Rank-up systems with custom mines and rewards",
+        "**Roleplay Servers** — Immersive experiences with custom mechanics",
+        "**DayZ Servers** — Post-apocalyptic survival with custom loot and zones",
+        "**Creative Worlds** — Building-focused servers with advanced tools"
+      ]
+    },
+    {
+      "name": "🗺️ World & Map Creation",
+      "emoji": "🗺️",
+      "items": [
+        "**Custom Worlds** — Unique terrain generation and biome design",
+        "**Adventure Maps** — Story-driven experiences with custom mechanics",
+        "**PvP Maps** — Balanced competitive environments",
+        "**Lobby Designs** — Impressive first impressions for your players",
+        "**Dungeon Systems** — Multi-level challenges with rewards",
+        "**City Builds** — Detailed urban environments and infrastructure"
+      ]
+    },
+    {
+      "name": "⚡ Premium Features",
+      "emoji": "⚡",
+      "items": [
+        "**24/7 Support** — Dedicated assistance throughout development",
+        "**Source Code Included** — Full ownership of all custom work",
+        "**Free Updates** — 30 days of bug fixes and minor improvements",
+        "**Documentation** — Comprehensive guides for setup and maintenance",
+        "**Performance Guarantee** — Optimized code for maximum server efficiency",
+        "**Custom Branding** — Tailored to match your server's identity"
+      ]
+    }
+  ]
+}

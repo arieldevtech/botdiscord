@@ -1,0 +1,125 @@
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const { brandEmbed } = require("../lib/embeds");
+const logger = require("../utils/logger");
+const { syncFixedEmbed } = require("../utils/fixedEmbeds");
+const config = require("../../config.json");
+
+function sha256(text) {
+  return crypto.createHash("sha256").update(text, "utf8").digest("hex");
+}
+
+function readServicesContent() {
+  const root = process.cwd();
+  const jsonPath = path.join(root, "content", "services.json");
+  
+  if (fs.existsSync(jsonPath)) {
+    try {
+      const raw = fs.readFileSync(jsonPath, "utf8");
+      const data = JSON.parse(raw);
+      return { type: "json", raw, data };
+    } catch (e) {
+      logger.warn("services.json exists but could not be parsed");
+      const raw = fs.readFileSync(jsonPath, "utf8");
+      return { type: "json", raw, data: null };
+    }
+  }
+  
+  return { type: "none", raw: "", data: null };
+}
+
+function buildServicesEmbedFromJson(json) {
+  const title = json.title || "Our Services";
+  const version = json.version ?? null;
+  const lastUpdated = json.lastUpdated || new Date().toISOString();
+  
+  const description = [
+    "🚀 **Transform Your Vision Into Reality**",
+    "",
+    "We specialize in creating exceptional Minecraft experiences tailored to your community's needs. From custom plugins to complete server solutions, our team delivers professional-grade services that exceed expectations.",
+    "",
+    "💎 **Why Choose Us?**",
+    "• **Expert Developers** — Years of experience in Minecraft development",
+    "• **Custom Solutions** — Every project is unique and tailored to you",
+    "• **Quality Guarantee** — We stand behind our work with ongoing support",
+    "• **Fast Delivery** — Professional results within agreed timelines"
+  ].join("\n");
+
+  const fields = [];
+  const sections = Array.isArray(json.sections) ? json.sections : [];
+  
+  for (const sec of sections) {
+    const name = `${sec.emoji || "📋"} **${sec.name || "Section"}**`;
+    const items = Array.isArray(sec.items) ? sec.items : [];
+    const value = items.map((i) => `${i}`).join("\n");
+    fields.push({ name, value, inline: false });
+  }
+
+  // Add call-to-action field
+  fields.push({
+    name: "🎯 **Ready to Get Started?**",
+    value: [
+      "Ready to bring your ideas to life? Our team is here to help!",
+      "",
+      "📞 **Contact us:** Open a ticket in <#1407818322703290532>",
+      "💬 **Free Consultation:** Discuss your project requirements",
+      "📋 **Custom Quote:** Get a personalized estimate for your needs"
+    ].join("\n"),
+    inline: false
+  });
+
+  const footerText = `© Bynex | Professional Minecraft Services | Last updated: ${new Date(lastUpdated).toLocaleDateString()}`;
+  const embed = brandEmbed({ 
+    title: `🎮 ${title}`, 
+    description,
+    fields, 
+    footerText 
+  });
+  
+  return { embed, version, lastUpdated };
+}
+
+async function syncServicesMessage(client) {
+  const channelId = config.servicesChannelId;
+  if (!channelId) {
+    logger.warn("[services] servicesChannelId is not configured; skipping services sync");
+    return;
+  }
+  
+  const content = readServicesContent();
+  const hash = sha256(content.raw || "");
+  
+  let built;
+  if (content.type === "json" && content.data) {
+    built = buildServicesEmbedFromJson(content.data);
+  } else {
+    // Create default services content
+    const defaultServices = {
+      version: 1,
+      title: "Our Professional Services",
+      lastUpdated: new Date().toISOString(),
+      sections: [
+        {
+          name: "Development Services",
+          emoji: "🔧",
+          items: ["Custom Minecraft plugins and solutions"]
+        }
+      ]
+    };
+    built = buildServicesEmbedFromJson(defaultServices);
+  }
+
+  await syncFixedEmbed(client, {
+    slug: "services",
+    channelId,
+    payload: { 
+      hash, 
+      version: built.version, 
+      lastUpdated: built.lastUpdated, 
+      embed: built.embed 
+    },
+  });
+}
+
+module.exports = { syncServicesMessage };

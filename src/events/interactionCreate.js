@@ -284,6 +284,65 @@ module.exports = {
         }
       }
 
+      // 5) Gestion des produits - Boutons de confirmation
+      if (interaction.isButton() && interaction.customId.startsWith("product:")) {
+        const parts = interaction.customId.split(":");
+        const action = parts[1];
+        const sku = parts[2];
+
+        if (action === "confirm_delete") {
+          const fs = require("fs");
+          const path = require("path");
+          const configPath = path.join(process.cwd(), "config.json");
+          const currentConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+          const products = currentConfig.products || [];
+          
+          const productIndex = products.findIndex(p => p.sku === sku);
+          if (productIndex === -1) {
+            return interaction.update({
+              embeds: [errorEmbed("❌ Produit non trouvé.")],
+              components: []
+            });
+          }
+
+          const product = products[productIndex];
+          products.splice(productIndex, 1);
+          currentConfig.products = products;
+          fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), "utf8");
+
+          const embed = brandEmbed({
+            title: "🗑️ Produit supprimé",
+            description: `Le produit **${product.name}** a été supprimé du catalogue.`,
+            fields: [
+              { name: "SKU", value: `\`${sku}\``, inline: true },
+              { name: "Prix", value: `€${product.priceEUR}`, inline: true }
+            ]
+          });
+
+          await interaction.update({ embeds: [embed], components: [] });
+
+          // Actualiser la vitrine
+          try {
+            const { ensureProductShowcase } = require("../modules/catalog/seed");
+            await ensureProductShowcase(interaction.client);
+          } catch (e) {
+            console.error("Erreur lors de l'actualisation de la vitrine:", e);
+          }
+          return;
+        }
+
+        if (action === "cancel_delete") {
+          await interaction.update({
+            embeds: [brandEmbed({
+              title: "❌ Suppression annulée",
+              description: "La suppression du produit a été annulée."
+            })],
+            components: []
+          });
+          return;
+        }
+      }
+
       // 4) Catalog pagination and buy button
       if (interaction.isButton() && interaction.customId.startsWith("catalog:")) {
         const parts = interaction.customId.split(":");

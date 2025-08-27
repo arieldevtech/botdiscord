@@ -238,6 +238,8 @@ function startServer(client) {
           });
         } else {
           // Traitement des achats de produits
+          const db = require("../services/database").getDatabase();
+          
           orders[session.id] = {
             session_id: session.id,
             sku: meta.sku,
@@ -248,6 +250,47 @@ function startServer(client) {
             created_at: new Date().toISOString(),
           };
           writeJson(".cache/orders.json", orders);
+          
+          // Sauvegarder en base de données si disponible
+          if (db.isEnabled()) {
+            try {
+              let user = await db.getUserByDiscordId(meta.discord_user_id);
+              if (!user) {
+                user = await db.createUser(meta.discord_user_id, meta.discord_username);
+              }
+              
+              // Créer le paiement en base
+              const payment = await db.createPayment({
+                user_id: user.id,
+                sku: meta.sku,
+                stripe_session_id: session.id,
+                amount_cents: session.amount_total,
+                currency: session.currency.toUpperCase(),
+                status: 'paid'
+              });
+              
+              // Créer la commande
+              const productConfig = require("../../config.json").products?.find(p => p.sku === meta.sku);
+              if (productConfig) {
+                await db.createOrder({
+                  user_id: user.id,
+                  payment_id: payment.id,
+                  sku: meta.sku,
+                  product_name: productConfig.name,
+                  price_cents: session.amount_total,
+                  currency: session.currency.toUpperCase(),
+                  license_key: licenseKey,
+                  status: 'delivered'
+                });
+              }
+              
+              // Mettre à jour le total dépensé
+              await db.updateUserSpending(user.id, session.amount_total);
+              
+            } catch (dbError) {
+              logger.error("Erreur lors de la sauvegarde en base:", dbError);
+            }
+          }
 
           // License + download (if any)
           let licenseKey = null;

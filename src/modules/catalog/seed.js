@@ -81,6 +81,16 @@ async function handleBuy(interaction, sku) {
   if (!product) {
     return interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "❌ Error", description: "Product not found." })] });
   }
+  
+  // Vérifier si l'utilisateur existe en base
+  const db = require("../../services/database").getDatabase();
+  if (db.isEnabled()) {
+    let user = await db.getUserByDiscordId(interaction.user.id);
+    if (!user) {
+      user = await db.createUser(interaction.user.id, interaction.user.tag);
+    }
+  }
+  
   try {
     await interaction.deferReply({ ephemeral: true });
     const session = await stripeServer.createCheckoutSession({

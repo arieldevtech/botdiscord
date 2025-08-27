@@ -220,6 +220,114 @@ class DatabaseService {
   }
 
   async getTicketMessages(ticketId, limit = 100) {
+    try {
+      const { data, error } = await this.supabase
+        .from("ticket_messages")
+        .select("*")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      logger.error(`[DB] Failed to get ticket messages:`, error);
+      throw error;
+    }
+  }
+
+  // Payment management
+  async createPayment(paymentData) {
+    try {
+      const { data, error } = await this.supabase
+        .from("payments")
+        .insert(paymentData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      logger.info(`[DB] Created payment: ${paymentData.sku || 'quote'} for user ${paymentData.user_id}`);
+      return data;
+    } catch (error) {
+      logger.error(`[DB] Failed to create payment:`, error);
+      throw error;
+    }
+  }
+
+  async updatePaymentStatus(paymentId, status) {
+    try {
+      const updateData = { status };
+      if (status === 'paid') {
+        updateData.paid_at = new Date().toISOString();
+      }
+      
+      const { data, error } = await this.supabase
+        .from("payments")
+        .update(updateData)
+        .eq("id", paymentId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      logger.error(`[DB] Failed to update payment status:`, error);
+      throw error;
+    }
+  }
+
+  // Order management
+  async createOrder(orderData) {
+    try {
+      const { data, error } = await this.supabase
+        .from("orders")
+        .insert(orderData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      logger.info(`[DB] Created order: ${orderData.sku} for user ${orderData.user_id}`);
+      return data;
+    } catch (error) {
+      logger.error(`[DB] Failed to create order:`, error);
+      throw error;
+    }
+  }
+
+  async updateUserSpending(userId, amountCents) {
+    try {
+      const { data, error } = await this.supabase
+        .from("users")
+        .update({ 
+          total_spent_cents: this.supabase.raw(`total_spent_cents + ${amountCents}`)
+        })
+        .eq("id", userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      // Calculer le niveau VIP basé sur le total dépensé
+      const totalSpent = data.total_spent_cents;
+      let vipLevel = 0;
+      if (totalSpent >= 50000) vipLevel = 3; // 500€+
+      else if (totalSpent >= 20000) vipLevel = 2; // 200€+
+      else if (totalSpent >= 10000) vipLevel = 1; // 100€+
+      
+      if (vipLevel !== data.vip_level) {
+        await this.supabase
+          .from("users")
+          .update({ vip_level: vipLevel })
+          .eq("id", userId);
+      }
+      
+      return data;
+    } catch (error) {
+      logger.error(`[DB] Failed to update user spending:`, error);
+      throw error;
+    }
+  }
+
   async getQuoteById(quoteId) {
     try {
       const { data, error } = await this.supabase
@@ -257,22 +365,6 @@ class DatabaseService {
       return data;
     } catch (error) {
       logger.error(`[DB] Failed to update quote status:`, error);
-      throw error;
-    }
-  }
-
-    try {
-      const { data, error } = await this.supabase
-        .from("ticket_messages")
-        .select("*")
-        .eq("ticket_id", ticketId)
-        .order("created_at", { ascending: true })
-        .limit(limit);
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      logger.error(`[DB] Failed to get ticket messages:`, error);
       throw error;
     }
   }

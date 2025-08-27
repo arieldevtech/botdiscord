@@ -166,7 +166,7 @@ module.exports = {
           });
         }
 
-        const embed = buildFaqCategoryEmbed(content.data, categoryKey);
+        if (['plugin_dev', 'mc_build', 'complete_server'].includes(ticket.ticket_type)) {
         const buttons = buildFaqButtons();
         
         const replyMethod = interaction.deferred ? 'editReply' : 'followUp';

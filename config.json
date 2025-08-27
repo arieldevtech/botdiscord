@@ -56,6 +56,21 @@
         ]
       }
     },
+    "complete_server": {
+      "name": "Complete Server Setup",
+      "emoji": "🎮",
+      "discordCategoryId": "1410010214224232449",
+      "introEmbed": {
+        "title": "🎮 **Complete Server Setup Request**",
+        "questions": [
+          "What type of server do you want? (Mini-Games, Factions, Survival, SkyBlock, Prison, Roleplay, DayZ, etc.)",
+          "How many players should your server support? (Expected player count)",
+          "What specific features and game modes do you need?",
+          "Do you need custom maps/worlds built for your server?",
+          "What's your budget range and preferred timeline for this complete setup?"
+        ]
+      }
+    },
     "partnership": {
       "name": "Partnership",
       "emoji": "🤝",

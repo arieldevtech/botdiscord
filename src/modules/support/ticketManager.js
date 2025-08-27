@@ -39,7 +39,7 @@ class TicketManager {
     );
 
     // Bouton devis pour certaines catégories
-    if (['plugin_dev', 'mc_build'].includes(categoryKey)) {
+    if (['plugin_dev', 'mc_build', 'complete_server'].includes(categoryKey)) {
       row2.addComponents(
         new ButtonBuilder()
           .setCustomId(`ticket:quote:${ticketId}`)

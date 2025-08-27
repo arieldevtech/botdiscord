@@ -319,6 +319,9 @@ class DatabaseService {
           .from("users")
           .update({ vip_level: vipLevel })
           .eq("id", userId);
+        
+        // Mettre à jour les rôles Discord
+        await this.updateDiscordVipRole(data.discord_id, vipLevel, data.vip_level);
       }
       
       return data;
@@ -328,6 +331,52 @@ class DatabaseService {
     }
   }
 
+  async updateDiscordVipRole(discordId, newLevel, oldLevel) {
+    try {
+      const config = require("../../config.json");
+      const vipRoles = config.roles?.vipRoles;
+      
+      if (!vipRoles || !this.discordClient) return;
+      
+      // Récupérer le membre Discord
+      const guild = this.discordClient.guilds.cache.get(config.guildId);
+      if (!guild) return;
+      
+      const member = await guild.members.fetch(discordId).catch(() => null);
+      if (!member) return;
+      
+      // Mapping des niveaux vers les rôles
+      const levelToRole = {
+        0: vipRoles.bronze,
+        1: vipRoles.silver,
+        2: vipRoles.gold,
+        3: vipRoles.diamond
+      };
+      
+      // Retirer l'ancien rôle si différent
+      if (oldLevel !== undefined && oldLevel !== newLevel) {
+        const oldRoleId = levelToRole[oldLevel];
+        if (oldRoleId && member.roles.cache.has(oldRoleId)) {
+          await member.roles.remove(oldRoleId).catch(() => {});
+          logger.info(`[VIP] Removed ${Object.keys(levelToRole)[oldLevel]} role from ${member.user.tag}`);
+        }
+      }
+      
+      // Ajouter le nouveau rôle
+      const newRoleId = levelToRole[newLevel];
+      if (newRoleId && !member.roles.cache.has(newRoleId)) {
+        await member.roles.add(newRoleId).catch(() => {});
+        logger.info(`[VIP] Added ${Object.keys(levelToRole)[newLevel]} role to ${member.user.tag}`);
+      }
+      
+    } catch (error) {
+      logger.error(`[VIP] Failed to update Discord role:`, error);
+    }
+  }
+
+  setDiscordClient(client) {
+    this.discordClient = client;
+  }
 
   async getQuoteById(quoteId) {
     try {

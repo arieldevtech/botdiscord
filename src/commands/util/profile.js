@@ -65,6 +65,27 @@ module.exports = {
 
       const vipStatus = vipLevels[user.vip_level] || vipLevels[0];
 
+      // Vérifier si l'utilisateur a le bon rôle VIP
+      const config = require("../../../config.json");
+      const vipRoles = config.roles?.vipRoles;
+      let roleStatus = "";
+      
+      if (vipRoles && !isOwnProfile) {
+        const member = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
+        if (member) {
+          const levelToRole = {
+            0: vipRoles.bronze,
+            1: vipRoles.silver,
+            2: vipRoles.gold,
+            3: vipRoles.diamond
+          };
+          
+          const expectedRoleId = levelToRole[user.vip_level];
+          const hasCorrectRole = expectedRoleId ? member.roles.cache.has(expectedRoleId) : false;
+          roleStatus = hasCorrectRole ? " ✅" : " ⚠️";
+        }
+      }
+
       // Dernières commandes
       const recentOrders = orders?.slice(0, 3).map(o => 
         `• **${o.product_name}** - €${(o.price_cents / 100).toFixed(2)}`
@@ -73,7 +94,7 @@ module.exports = {
       const embed = brandEmbed({
         title: `👤 Profil de ${targetUser.username}`,
         fields: [
-          { name: "🏆 Statut VIP", value: vipStatus, inline: true },
+          { name: "🏆 Statut VIP", value: vipStatus + roleStatus, inline: true },
           { name: "💰 Total dépensé", value: `**€${(totalSpent / 100).toFixed(2)}**`, inline: true },
           { name: "📦 Commandes", value: `**${totalOrders}**`, inline: true },
           { name: "🎫 Tickets", value: `**${totalTickets}** (${openTickets} ouverts)`, inline: true },

@@ -82,6 +82,7 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
   try {
     // Initialize database service
     const db = getDatabase();
+    
     if (db.isEnabled()) {
       const health = await db.healthCheck();
       if (health.healthy) {
@@ -107,6 +108,11 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
 
     // After login and cache ready, run rules sync and start Stripe server
     client.once("ready", async () => {
+      // Set Discord client in database service for VIP role management
+      if (db.isEnabled()) {
+        db.setDiscordClient(client);
+      }
+      
       await syncRulesMessage(client);
       await syncFaqMessage(client);
       await syncServicesMessage(client);

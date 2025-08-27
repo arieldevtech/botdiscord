@@ -11,8 +11,13 @@ module.exports = {
     
     // Create user in database
     try {
-      await db.createUser(member.user.id, member.user.tag);
+      const user = await db.createUser(member.user.id, member.user.tag);
       logger.info(`[Welcome] User ${member.user.tag} added to database`);
+      
+      // Assigner le rôle VIP Bronze par défaut
+      if (user && db.isEnabled()) {
+        await db.updateDiscordVipRole(member.user.id, 0); // Bronze par défaut
+      }
     } catch (error) {
       logger.error(`[Welcome] Failed to add user to database:`, error);
     }

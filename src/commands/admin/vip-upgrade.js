@@ -72,6 +72,9 @@ module.exports = {
 
       if (error) throw error;
 
+      // Mettre à jour le rôle Discord
+      await db.updateDiscordVipRole(targetUser.id, newLevel, oldLevel);
+
       // Log de l'action
       await db.logAction('vip_level_changed', interaction.user.id, 'user', user.id, {
         old_level: oldLevel,

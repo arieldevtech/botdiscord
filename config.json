@@ -1,7 +1,7 @@
 {
   "botName": "Korō Assistant",
-  "version": "1.0.0",
-  "color": "#FFFFFF",
+  "version": "1.1.0",
+  "color": "#0CC0DF",
   "defaultLanguage": "en",
   "guildId": "1407626539822223456",
   "channels": {
@@ -9,13 +9,103 @@
     "rulesChannelId": "1407818299399475270"
   },
   "roles": {
-    "autoRoleId": "1407818293141569798"
+    "autoRoleId": "1407818293141569798",
+    "adminRoleId": "1407818285927497900"
   },
   "embeds": {
     "brand": {
-      "accentHex": "#FFFFFF",
+      "accentHex": "#5865F2",
       "footerText": "© Bynex",
       "thumbnailUrl": ""
     }
-  }
+  },
+  "ticketHubChannelId": "1407818322703290532",
+  "productShowcaseChannelId": "1407818314759012494",
+  "supportRoleIds": ["1407818287126937685", "1407818285927497900"],
+  "ticketCategories": {
+    "plugin_dev": {
+      "name": "Plugin Development",
+      "discordCategoryId": "1410010162957385788",
+      "introEmbed": {
+        "title": "📦 Plugin Project — Information",
+        "questions": [
+          "Describe the desired plugin (key features)",
+          "Target version / platform",
+          "Timeline / constraints",
+          "Estimated budget"
+        ]
+      }
+    },
+    "mc_build": {
+      "name": "Minecraft Build",
+      "discordCategoryId": "1410010214224232449",
+      "introEmbed": {
+        "title": "🏗️ Build — Project Details",
+        "questions": [
+          "Build type (spawn, hub, map…)",
+          "Style / Theme",
+          "Dimensions / Size",
+          "References / Examples",
+          "Timeline / constraints"
+        ]
+      }
+    },
+    "partnership": {
+      "name": "Partnership",
+      "discordCategoryId": "1407818377417986120",
+      "introEmbed": {
+        "title": "🤝 Partnership — Share your idea",
+        "questions": [
+          "About your project / organization",
+          "Partnership goals",
+          "Proposed value exchange",
+          "Modalities and timeline"
+        ]
+      }
+    },
+    "refund": {
+      "name": "Refund",
+      "discordCategoryId": "1410009992526037063",
+      "introEmbed": {
+        "title": "💸 Refund Request",
+        "questions": [
+          "Payment / order reference",
+          "Reason",
+          "Evidence / additional details"
+        ]
+      }
+    },
+    "helpdesk": {
+      "name": "Questions / Helpdesk",
+      "discordCategoryId": "1407818381180145784",
+      "introEmbed": {
+        "title": "🆘 Help — Describe your need",
+        "questions": [
+          "Issue description",
+          "What you tried so far",
+          "Screenshots/logs if available"
+        ]
+      }
+    }
+  },
+  "products": [
+    {
+      "sku": "plugin-basic",
+      "name": "Basic Plugin",
+      "priceEUR": 29,
+      "description": "Essential features to get started fast.",
+      "images": [],
+      "licensePolicy": "Single-server license",
+      "deliverableFile": ""
+    },
+    {
+      "sku": "build-spawn",
+      "name": "Minecraft Spawn",
+      "priceEUR": 79,
+      "description": "Professional spawn ready to use.",
+      "images": [],
+      "licensePolicy": "Single-use",
+      "deliverableFile": ""
+    }
+  ]
 }

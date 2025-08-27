@@ -1,14 +1,18 @@
-const { InteractionType, PermissionFlagsBits, ComponentType } = require("discord.js");
+const { InteractionType, PermissionFlagsBits, ComponentType, ChannelType } = require("discord.js");
 const logger = require("../utils/logger");
 const { checkAndSetCooldown } = require("../utils/cooldown");
-const { brandEmbed } = require("../lib/embeds");
+const { brandEmbed, errorEmbed } = require("../lib/embeds");
+const { createTicketChannel, buildTicketIntroEmbed } = require("../modules/support/seed");
+const config = require("../../config.json");
+const { readJson, writeJson } = require("../utils/cache");
+const { pageEmbeds, pageButtons, handleBuy } = require("../modules/catalog/seed");
 
 module.exports = {
   name: "interactionCreate",
   once: false,
   async execute(interaction, client) {
     try {
-      // Autocomplete support
+      // 1) Autocomplete
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
         const command = client.commands.get(interaction.commandName);
         if (command?.autocomplete) {
@@ -19,7 +23,7 @@ module.exports = {
         return;
       }
 
-      // Button interactions (help pagination)
+      // 2) Help pagination buttons
       if (interaction.isButton() && interaction.customId.startsWith("help:")) {
         try {
           const cat = interaction.customId.split(":")[1];
@@ -38,38 +42,76 @@ module.exports = {
         }
       }
 
-      if (interaction.type !== InteractionType.ApplicationCommand) return; // ignore others
+      // 3) Support select menu → create ticket
+      if (interaction.isStringSelectMenu() && interaction.customId === "support:select") {
+        const categoryKey = interaction.values?.[0];
+        const cache = readJson(".cache/tickets.json", { open: {} });
+        const userId = interaction.user.id;
+        if (cache.open[userId]) {
+          return interaction.reply({ ephemeral: true, embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")] });
+        }
+
+        await interaction.deferReply({ ephemeral: true });
+        const channel = await createTicketChannel(interaction.guild, interaction.user, categoryKey);
+        cache.open[userId] = { channelId: channel.id, categoryKey, openedAt: new Date().toISOString() };
+        writeJson(".cache/tickets.json", cache);
+
+        const intro = buildTicketIntroEmbed(categoryKey);
+        await channel.send({ content: `<@${userId}>`, embeds: [intro] });
+        // DM notification
+        try {
+          await interaction.user.send({ embeds: [brandEmbed({ title: "🎫 Ticket Created", description: `Your ticket has been opened in ${channel}. A staff member will assist you shortly.` })] });
+        } catch (_) {}
+
+        await interaction.editReply({ embeds: [brandEmbed({ title: "🎫 Ticket Created", description: `Channel: ${channel}` })] });
+        return;
+      }
+
+      // 4) Catalog pagination and buy button
+      if (interaction.isButton() && interaction.customId.startsWith("catalog:")) {
+        const parts = interaction.customId.split(":");
+        const action = parts[1];
+        const arg = parts[2];
+        const products = (require("../../config.json").products) || [];
+
+        if (action === "buy") {
+          return handleBuy(interaction, parts[2]);
+        }
+
+        // Pagination
+        const cache = readJson(".cache/catalog.json", {});
+        const page = Number(arg) || 0;
+        let newPage = page;
+        if (action === "next") newPage = page + 1;
+        if (action === "prev") newPage = Math.max(0, page - 1);
+        const pages = Math.max(1, Math.ceil(products.length / 5));
+        if (newPage >= pages) newPage = pages - 1;
+
+        const embeds = pageEmbeds(products, newPage);
+        const components = pageButtons(products, newPage);
+        await interaction.update({ content: `Product showcase (${products.length}) — Page ${newPage + 1}/${pages}`, embeds, components }).catch(() => {});
+        writeJson(".cache/catalog.json", { ...cache, page: newPage, messageId: cache.messageId });
+        return;
+      }
+
+      // 5) Slash commands handling
+      if (interaction.type !== InteractionType.ApplicationCommand) return;
 
       const command = client.commands.get(interaction.commandName);
-      if (!command) return; // graceful ignore
+      if (!command) return;
 
-      // Permission check (per command)
       if (command.permissions) {
         const member = interaction.member;
         const hasPerms = command.permissions.every((p) => member.permissions?.has(PermissionFlagsBits[p] ?? p));
         if (!hasPerms) {
-          return interaction.reply({
-            ephemeral: true,
-            embeds: [
-              brandEmbed({
-                title: "⚠️ Permission Denied",
-                description: "You don't have the required permissions to run this command.",
-              }),
-            ],
-          });
+          return interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "⚠️ Permission Denied", description: "You don't have the required permissions to run this command." })] });
         }
       }
 
-      // Cooldown check
-      const cd = command.cooldown ?? 3; // default 3s
+      const cd = command.cooldown ?? 3;
       const gate = checkAndSetCooldown(client, interaction.user.id, command, cd);
       if (!gate.allowed) {
-        return interaction.reply({
-          ephemeral: true,
-          embeds: [
-            brandEmbed({ title: "Slow down", description: `Please wait ${gate.remaining}s before using this again.` }),
-          ],
-        });
+        return interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "Please wait", description: `Please wait ${gate.remaining}s before trying again.` })] });
       }
 
       await command.execute(interaction, client);
@@ -81,9 +123,7 @@ module.exports = {
         } else {
           await interaction.reply({ ephemeral: true, embeds: [brandEmbed({ title: "❌ Error", description: "Something went wrong, please try again later." })] });
         }
-      } catch (_) {
-        // swallow
-      }
+      } catch (_) {}
     }
   },
 };

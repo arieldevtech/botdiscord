@@ -9,6 +9,9 @@ const { loadEvents } = require("./handlers/events");
 const { registerGuildCommands } = require("./handlers/registerCommands");
 const { initSupabase, pingSupabase } = require("./utils/supabase");
 const { syncRulesMessage } = require("./features/rules");
+const { ensureTicketHub, validateTicketCategories } = require("./modules/support/seed");
+const { ensureProductShowcase } = require("./modules/catalog/seed");
+const { startServer } = require("./payments/stripeServer");
 
 // Map DISCORD_* to legacy if needed
 process.env.TOKEN = process.env.TOKEN || process.env.DISCORD_TOKEN;
@@ -55,9 +58,13 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
     // Login
     await client.login(process.env.TOKEN);
 
-    // After login and cache ready, run rules sync
+    // After login and cache ready, run rules sync and start Stripe server
     client.once("ready", async () => {
       await syncRulesMessage(client);
+      await ensureTicketHub(client);
+      await ensureProductShowcase(client);
+      await validateTicketCategories(client);
+      startServer(client); // Express: /stripe/checkout, /stripe/webhook, /stripe/dl
     });
   } catch (err) {
     logger.error("Fatal startup error:", err);

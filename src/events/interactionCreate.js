@@ -180,6 +180,7 @@ module.exports = {
       }
 
       // 4) Gestion des tickets - Boutons et modales
+      if (interaction.isButton() && interaction.customId.startsWith("ticket:")) {
         const parts = interaction.customId.split(":");
         const action = parts[1];
         const ticketId = parts[2];

@@ -4,6 +4,7 @@ const logger = require("../utils/logger");
 const { checkAndSetCooldown } = require("../utils/cooldown");
 const { brandEmbed, errorEmbed } = require("../lib/embeds");
 const { createTicketChannel, buildTicketIntroEmbed } = require("../modules/support/seed");
+const { buildFaqMainEmbed, buildFaqSelectMenu } = require("../features/faq");
 const config = require("../../config.json");
 const { readJson, writeJson } = require("../utils/cache");
 const { getDatabase } = require("../services/database");
@@ -55,16 +56,16 @@ module.exports = {
         
         // Reset the dropdown for this user by updating the original message
         try {
-          const { ensureTicketHub } = require("../modules/support/seed");
-          const originalEmbed = require("../modules/support/seed").buildHubEmbed();
-          const originalMenu = require("../modules/support/seed").buildHubMenu();
+          const originalEmbed = buildHubEmbed();
+          const originalMenu = buildHubMenu();
           await interaction.update({ 
             embeds: [originalEmbed], 
             components: [originalMenu] 
           });
         } catch (resetError) {
           console.error("Error resetting support dropdown:", resetError);
-          // Continue with ticket creation even if reset fails
+          // If reset fails, just defer the reply to avoid interaction timeout
+          await interaction.deferReply({ flags: 64 });
         }
         
         if (db.isEnabled()) {
@@ -77,14 +78,15 @@ module.exports = {
           // Check for existing open ticket
           const existingTicket = await db.getOpenTicketByUserId(user.id);
           if (existingTicket) {
-            return interaction.reply({ 
+            const replyMethod = interaction.deferred ? 'editReply' : 'followUp';
+            return interaction[replyMethod]({ 
               embeds: [errorEmbed("❌ **Ticket Already Open**\n\nYou already have an active ticket. Please close it before creating a new one.\n\n**Your current ticket:** <#" + existingTicket.channel_id + ">")], 
               flags: 64 
             });
           }
         }
 
-        // Use followUp since we already updated the interaction above
+        // Create the ticket channel
         const channel = await createTicketChannel(interaction.guild, interaction.user, categoryKey);
         
         let ticket = null;
@@ -109,7 +111,8 @@ module.exports = {
         });
         
         const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
-        await interaction.followUp({ 
+        const replyMethod = interaction.deferred ? 'editReply' : 'followUp';
+        await interaction[replyMethod]({ 
           flags: 64,
           embeds: [brandEmbed({ 
           title: "✅ **Ticket Created**", 
@@ -149,12 +152,14 @@ module.exports = {
           }
         } catch (resetError) {
           console.error("Error resetting FAQ dropdown:", resetError);
-          // Continue with FAQ display even if reset fails
+          // If reset fails, just defer the reply to avoid interaction timeout
+          await interaction.deferReply({ flags: 64 });
         }
         
         const content = readFaqContent();
         if (!content.data) {
-          return interaction.followUp({
+          const replyMethod = interaction.deferred ? 'editReply' : 'followUp';
+          return interaction[replyMethod]({
             flags: 64,
             embeds: [errorEmbed("❌ FAQ content not available.")]
           });
@@ -163,7 +168,8 @@ module.exports = {
         const embed = buildFaqCategoryEmbed(content.data, categoryKey);
         const buttons = buildFaqButtons();
         
-        await interaction.followUp({
+        const replyMethod = interaction.deferred ? 'editReply' : 'followUp';
+        await interaction[replyMethod]({
           flags: 64,
           embeds: [embed],
           components: [buttons]
@@ -175,7 +181,7 @@ module.exports = {
         const action = interaction.customId.split(":")[1];
         
         if (action === "back") {
-          const { readFaqContent, buildFaqMainEmbed, buildFaqSelectMenu } = require("../features/faq");
+          const { readFaqContent } = require("../features/faq");
           const content = readFaqContent();
           
           if (!content.data) {

@@ -179,7 +179,6 @@ module.exports = {
             return;
 
           case "cancel_close":
-                flags: 64,
             await interaction.update({
               embeds: [brandEmbed({
                 title: "❌ Closure Cancelled",

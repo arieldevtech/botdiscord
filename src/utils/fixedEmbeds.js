@@ -32,7 +32,6 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
     logger.warn(`[fixedEmbeds:${slug}] Missing channelId in config; skipping`);
     return;
   }
-  const guild = client.guilds.cache.get(client?.application?.guild?.id) || client.guilds.cache.first();
   const channel = client.channels.cache.get(channelId) || (await client.channels.fetch(channelId).catch(() => null));
   if (!channel) {
     logger.warn(`[fixedEmbeds:${slug}] Channel ${channelId} not found or not accessible`);
@@ -44,6 +43,15 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
 
   const { hash, version, lastUpdated, embed } = payload;
   const changed = cache.lastAppliedHash !== hash;
+
+  // Si pas de changement et message existe, ne rien faire
+  if (!changed && cache.messageId) {
+    const existing = await fetchMessageById(channel, cache.messageId);
+    if (existing) {
+      logger.info(`[fixedEmbeds:${slug}] No changes detected; keeping current message (${existing.id})`);
+      return;
+    }
+  }
 
   // Helper to post & pin, then persist cache
   const postAndPin = async () => {
@@ -72,11 +80,6 @@ async function syncFixedEmbed(client, { slug, channelId, payload }) {
 
   // Ensure it's pinned (best-effort)
   try { if (!existing.pinned) await existing.pin(); } catch (_) {}
-
-  if (!changed) {
-    logger.info(`[fixedEmbeds:${slug}] No changes detected; keeping current message (${existing.id})`);
-    return;
-  }
 
   // Edit existing message content
   try {

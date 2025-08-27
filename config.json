@@ -14,7 +14,7 @@
   },
   "embeds": {
     "brand": {
-      "accentHex": "#5865F2",
+      "accentHex": "#FFFFFF",
       "footerText": "© Bynex",
       "thumbnailUrl": ""
     }

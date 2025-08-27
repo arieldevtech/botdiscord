@@ -4,10 +4,10 @@ const logger = require("../utils/logger");
 class DatabaseService {
   constructor() {
     const url = process.env.SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
     
     if (!url || !serviceKey) {
-      logger.warn("Missing Supabase credentials (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY)");
+      logger.warn("Missing Supabase credentials (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY)");
       logger.warn("Database features will be disabled. Bot will run in limited mode.");
       this.supabase = null;
       return;
@@ -17,7 +17,7 @@ class DatabaseService {
       auth: { persistSession: false, autoRefreshToken: false }
     });
     
-    logger.success("Database service initialized");
+    logger.success(`Database service initialized with ${serviceKey.includes('service_role') ? 'service role' : 'anon'} key`);
   }
 
   isEnabled() {

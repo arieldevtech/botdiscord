@@ -24,6 +24,28 @@ const missing = REQUIRED_ENV.filter((k) => !process.env[k] || String(process.env
 if (missing.length) {
   logger.warn("Environment validation failed. Missing/placeholder:", missing.join(", "));
   logger.warn("Create a .env file based on .env.example and fill real values.");
+  logger.warn("Get your Discord credentials from: https://discord.com/developers/applications");
+  process.exit(1);
+}
+
+// Additional validation for Discord credentials
+const token = process.env.TOKEN;
+const clientId = process.env.CLIENT_ID;
+const guildId = process.env.GUILD_ID;
+
+if (!token.match(/^[A-Za-z0-9._-]{59}$/)) {
+  logger.error("Invalid TOKEN format. Should be a 59-character string from Discord Developer Portal");
+  process.exit(1);
+}
+
+if (!clientId.match(/^\d{17,19}$/)) {
+  logger.error("Invalid CLIENT_ID format. Should be a 17-19 digit application ID");
+  process.exit(1);
+}
+
+if (!guildId.match(/^\d{17,19}$/)) {
+  logger.error("Invalid GUILD_ID format. Should be a 17-19 digit server ID");
+  process.exit(1);
 }
 
 // 2) Create client (add more intents for features)

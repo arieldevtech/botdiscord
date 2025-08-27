@@ -142,10 +142,10 @@ module.exports = {
               const ticket = await getDatabase().getTicketByChannelId(interaction.channel.id);
               if (ticket) {
                 await interaction.reply({
-                  ephemeral: true,
+                  flags: 64,
                   embeds: [brandEmbed({
-                    title: "💰 Créer un devis",
-                    description: "Utilisez la commande `/quote create` pour créer un devis pour ce ticket."
+                    title: "💰 Create Quote",
+                    description: "Use the `/quote create` command to create a quote for this ticket."
                   })]
                 });
               }
@@ -157,32 +157,33 @@ module.exports = {
             if (interaction.user.id !== userId) {
               return interaction.reply({
                 flags: 64,
-                embeds: [errorEmbed("❌ Seul l'utilisateur qui a initié la fermeture peut confirmer.")]
+                embeds: [errorEmbed("❌ Only the user who initiated the closure can confirm.")]
               });
             }
             
             await interaction.deferReply();
-            const success = await ticketManager.closeTicket(ticketId, interaction.user.id, "Fermé par l'utilisateur");
+            const success = await ticketManager.closeTicket(ticketId, interaction.user.id, "Closed by user");
             
             if (success) {
               await interaction.editReply({
                 embeds: [brandEmbed({
-                  title: "🔒 Ticket fermé",
-                  description: "Le ticket sera supprimé dans 10 secondes."
+                  title: "🔒 Ticket Closed",
+                  description: "The ticket will be deleted in 10 seconds."
                 })]
               });
             } else {
               await interaction.editReply({
-                embeds: [errorEmbed("❌ Erreur lors de la fermeture du ticket.")]
+                embeds: [errorEmbed("❌ Error while closing the ticket.")]
               });
             }
             return;
 
+          case "cancel_close":
                 flags: 64,
             await interaction.update({
               embeds: [brandEmbed({
-                title: "❌ Fermeture annulée",
-                description: "La fermeture du ticket a été annulée."
+                title: "❌ Closure Cancelled",
+                description: "The ticket closure has been cancelled."
               })],
               components: []
             });
@@ -196,14 +197,14 @@ module.exports = {
                 if (!quote) {
                   return interaction.reply({
                     flags: 64,
-                    embeds: [errorEmbed("❌ Devis non trouvé.")]
+                    embeds: [errorEmbed("❌ Quote not found.")]
                   });
                 }
 
                 if (quote.status !== 'pending') {
                   return interaction.reply({
                     flags: 64,
-                    embeds: [errorEmbed("❌ Ce devis n'est plus disponible.")]
+                    embeds: [errorEmbed("❌ This quote is no longer available.")]
                   });
                 }
 
@@ -254,10 +255,10 @@ module.exports = {
                 await interaction.followUp({ embeds: [ticketEmbed] });
 
               } catch (error) {
-                console.error('Erreur lors de l\'acceptation du devis:', error);
+                console.error('Error accepting quote:', error);
                 await interaction.reply({
                   flags: 64,
-                  embeds: [errorEmbed("❌ Erreur lors de l'acceptation du devis.")]
+                  embeds: [errorEmbed("❌ Error while accepting the quote.")]
                 });
               }
             }
@@ -285,10 +286,10 @@ module.exports = {
                 await interaction.followUp({ embeds: [ticketEmbed] });
 
               } catch (error) {
-                console.error('Erreur lors du refus du devis:', error);
+                console.error('Error rejecting quote:', error);
                 await interaction.reply({
                   flags: 64,
-                  embeds: [errorEmbed("❌ Erreur lors du refus du devis.")]
+                  embeds: [errorEmbed("❌ Error while rejecting the quote.")]
                 });
               }
             }
@@ -312,7 +313,7 @@ module.exports = {
           const productIndex = products.findIndex(p => p.sku === sku);
           if (productIndex === -1) {
             return interaction.update({
-              embeds: [errorEmbed("❌ Produit non trouvé.")],
+              embeds: [errorEmbed("❌ Database not available.")]
               components: []
             });
           }
@@ -323,11 +324,11 @@ module.exports = {
           fs.writeFileSync(configPath, JSON.stringify(currentConfig, null, 2), "utf8");
 
           const embed = brandEmbed({
-            title: "🗑️ Produit supprimé",
-            description: `Le produit **${product.name}** a été supprimé du catalogue.`,
+            title: "🗑️ Product Deleted",
+            description: `The product **${product.name}** has been removed from the catalog.`,
             fields: [
               { name: "SKU", value: `\`${sku}\``, inline: true },
-              { name: "Prix", value: `€${product.priceEUR}`, inline: true }
+              { name: "Price", value: `€${product.priceEUR}`, inline: true }
             ]
           });
 
@@ -338,7 +339,7 @@ module.exports = {
             const { ensureProductShowcase } = require("../modules/catalog/seed");
             await ensureProductShowcase(interaction.client);
           } catch (e) {
-            console.error("Erreur lors de l'actualisation de la vitrine:", e);
+            console.error("Error refreshing showcase:", e);
           }
           return;
         }
@@ -346,8 +347,8 @@ module.exports = {
         if (action === "cancel_delete") {
           await interaction.update({
             embeds: [brandEmbed({
-              title: "❌ Suppression annulée",
-              description: "La suppression du produit a été annulée."
+              title: "❌ Deletion Cancelled",
+              description: "The product deletion has been cancelled."
             })],
             components: []
           });

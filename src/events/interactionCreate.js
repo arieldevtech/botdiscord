@@ -5,6 +5,7 @@ const { checkAndSetCooldown } = require("../utils/cooldown");
 const { brandEmbed, errorEmbed } = require("../lib/embeds");
 const { createTicketChannel, buildTicketIntroEmbed } = require("../modules/support/seed");
 const { buildFaqMainEmbed, buildFaqSelectMenu } = require("../features/faq");
+const { buildHubEmbed, buildHubMenu } = require("../modules/support/seed");
 const config = require("../../config.json");
 const { readJson, writeJson } = require("../utils/cache");
 const { getDatabase } = require("../services/database");

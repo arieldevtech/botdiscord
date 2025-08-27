@@ -7,11 +7,14 @@ const config = require("../../config.json");
 const { readJson, writeJson } = require("../utils/cache");
 const { getDatabase } = require("../services/database");
 const { pageEmbeds, pageButtons, handleBuy } = require("../modules/catalog/seed");
+const { TicketManager } = require("../modules/support/ticketManager");
 
 module.exports = {
   name: "interactionCreate",
   once: false,
   async execute(interaction, client) {
+    const ticketManager = new TicketManager(client);
+    
     try {
       // 1) Autocomplete
       if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
@@ -81,8 +84,68 @@ module.exports = {
         return;
       }
 
+      // 4) Gestion des tickets - Boutons et modales
+      if (interaction.customId && interaction.customId.startsWith("ticket:")) {
+        const parts = interaction.customId.split(":");
+        const action = parts[1];
+        const ticketId = parts[2];
+
+        switch (action) {
+          case "answer":
+            const ticket = await getDatabase().getTicketByChannelId(interaction.channel.id);
+            if (ticket) {
+              const modal = ticketManager.createAnswerModal(ticket.id, ticket.ticket_type);
+              await interaction.showModal(modal);
+            }
+            return;
+
+          case "modal":
+            await ticketManager.handleAnswerSubmission(interaction, ticketId);
+            return;
+
+          case "claim":
+            await ticketManager.handleClaim(interaction, ticketId);
+            return;
+
+          case "confirm_close":
+            const userId = parts[3];
+            if (interaction.user.id !== userId) {
+              return interaction.reply({
+                ephemeral: true,
+                embeds: [errorEmbed("❌ Seul l'utilisateur qui a initié la fermeture peut confirmer.")]
+              });
+            }
+            
+            await interaction.deferReply();
+            const success = await ticketManager.closeTicket(ticketId, interaction.user.id, "Fermé par l'utilisateur");
+            
+            if (success) {
+              await interaction.editReply({
+                embeds: [brandEmbed({
+                  title: "🔒 Ticket fermé",
+                  description: "Le ticket sera supprimé dans 10 secondes."
+                })]
+              });
+            } else {
+              await interaction.editReply({
+                embeds: [errorEmbed("❌ Erreur lors de la fermeture du ticket.")]
+              });
+            }
+            return;
+
+          case "cancel_close":
+            await interaction.update({
+              embeds: [brandEmbed({
+                title: "❌ Fermeture annulée",
+                description: "La fermeture du ticket a été annulée."
+              })],
+              components: []
+            });
+            return;
+        }
+      }
+
       // 4) Catalog pagination and buy button
-      if (interaction.isButton() && interaction.customId.startsWith("catalog:")) {
         const parts = interaction.customId.split(":");
         const action = parts[1];
         const arg = parts[2];

@@ -153,9 +153,14 @@ class DatabaseService {
 
   async updateTicketStatus(ticketId, status) {
     try {
+      const updateData = { status };
+      if (status === 'closed') {
+        updateData.closed_at = new Date().toISOString();
+      }
+      
       const { data, error } = await this.supabase
         .from("tickets")
-        .update({ status })
+        .update(updateData)
         .eq("id", ticketId)
         .select()
         .single();

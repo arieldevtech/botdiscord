@@ -4,6 +4,7 @@ const { brandEmbed } = require("../../lib/embeds");
 const { readJson, writeJson } = require("../../utils/cache");
 const { getDatabase } = require("../../services/database");
 const logger = require("../../utils/logger");
+const { TicketManager } = require("./ticketManager");
 
 const CACHE_PATH = ".cache/support.json";
 
@@ -38,6 +39,10 @@ async function ensureTicketHub(client) {
 
   const embed = buildHubEmbed();
   const menu = buildHubMenu();
+
+  // Créer les boutons d'action pour le ticket
+  const ticketManager = new TicketManager(client);
+  const buttons = ticketManager.createTicketButtons(ticket.id, categoryKey);
 
   if (cache.hubMessageId) {
     const msg = await channel.messages.fetch(cache.hubMessageId).catch(() => null);
@@ -81,6 +86,10 @@ async function createTicketChannel(guild, user, categoryKey) {
     type: ChannelType.GuildText,
     parent: parentId || undefined,
     permissionOverwrites: overwrites,
+  await channel.send({ 
+    content: `<@${userId}>`, 
+    embeds: [embed], 
+    components: buttons 
   });
 
   return channel;

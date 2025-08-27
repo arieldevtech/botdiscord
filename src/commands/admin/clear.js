@@ -2,6 +2,11 @@ const { SlashCommandBuilder, PermissionFlagsBits } = require("discord.js");
 const { brandEmbed, successEmbed, errorEmbed } = require("../../lib/embeds");
 const config = require("../../../config.json");
 
+function hasAdminRole(member) {
+  const adminRoleId = config.roles?.adminRoleId;
+  return adminRoleId ? member.roles.cache.has(adminRoleId) : false;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("clear")
@@ -19,8 +24,8 @@ module.exports = {
 
     const member = interaction.member;
     const adminRoleId = config.roles?.adminRoleId;
-    const hasAdminRole = adminRoleId ? member.roles?.cache?.has(adminRoleId) : false;
-    const hasPerm = member.permissions?.has(PermissionFlagsBits.ManageMessages) || hasAdminRole;
+    const hasAdmin = hasAdminRole(member);
+    const hasPerm = member.permissions?.has(PermissionFlagsBits.ManageMessages) || hasAdmin;
     if (!hasPerm) {
       return interaction.reply({ ephemeral: true, embeds: [errorEmbed("**⚠️ Permission Denied**\nYou need ManageMessages or the configured ADMIN role.")] });
     }

@@ -3,6 +3,11 @@ const { brandEmbed, errorEmbed } = require("../../lib/embeds");
 const { getDatabase } = require("../../services/database");
 const config = require("../../../config.json");
 
+function hasAdminRole(member) {
+  const adminRoleId = config.roles?.adminRoleId;
+  return adminRoleId ? member.roles.cache.has(adminRoleId) : false;
+}
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("stats")
@@ -23,7 +28,17 @@ module.exports = {
   cooldown: 10,
   async execute(interaction) {
     const db = getDatabase();
+    const member = interaction.member;
     const subcommand = interaction.options.getSubcommand();
+
+    // Vérification des permissions admin
+    const hasAdmin = hasAdminRole(member) || member.permissions.has(PermissionFlagsBits.ManageGuild);
+    if (!hasAdmin) {
+      return interaction.reply({
+        ephemeral: true,
+        embeds: [errorEmbed("❌ Vous devez avoir le rôle administrateur pour utiliser cette commande.")]
+      });
+    }
 
     if (!db.isEnabled()) {
       return interaction.reply({

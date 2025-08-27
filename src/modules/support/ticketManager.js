@@ -270,6 +270,9 @@ class TicketManager {
       // Récupérer le canal et l'archiver
       const channel = await this.client.channels.fetch(ticket.channel_id).catch(() => null);
       if (channel) {
+        // Créer un transcript avant fermeture
+        const transcript = await this.createTicketTranscript(ticket, channel);
+        
         // Créer un embed de fermeture
         const closeEmbed = brandEmbed({
           title: "🔒 Ticket fermé",
@@ -281,6 +284,9 @@ class TicketManager {
         });
 
         await channel.send({ embeds: [closeEmbed] });
+
+        // Envoyer le transcript dans le canal d'archive
+        await this.sendToArchive(ticket, transcript, reason, closedBy);
 
         // Supprimer le canal après 10 secondes
         setTimeout(async () => {
@@ -312,6 +318,79 @@ class TicketManager {
     } catch (error) {
       console.error('Erreur lors de la fermeture du ticket:', error);
       return false;
+    }
+  }
+
+  /**
+   * Crée un transcript du ticket
+   */
+  async createTicketTranscript(ticket, channel) {
+    try {
+      const messages = await channel.messages.fetch({ limit: 100 });
+      const sortedMessages = messages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
+      
+      const transcript = {
+        ticket_id: ticket.id,
+        ticket_type: ticket.ticket_type,
+        client: ticket.users.discord_tag,
+        created_at: ticket.created_at,
+        closed_at: new Date().toISOString(),
+        messages: sortedMessages.map(msg => ({
+          author: msg.author.tag,
+          content: msg.content,
+          timestamp: msg.createdAt.toISOString(),
+          attachments: msg.attachments.map(att => att.url)
+        }))
+      };
+
+      // Sauvegarder en base
+      await this.db.supabase
+        .from("archives")
+        .insert({
+          ticket_id: ticket.id,
+          transcript_data: transcript,
+          file_size_bytes: JSON.stringify(transcript).length
+        });
+
+      return transcript;
+    } catch (error) {
+      console.error('Erreur lors de la création du transcript:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Envoie le résumé dans le canal d'archive
+   */
+  async sendToArchive(ticket, transcript, reason, closedBy) {
+    try {
+      const config = require("../../../config.json");
+      const archiveChannelId = config.archiveChannelId;
+      
+      if (!archiveChannelId) return;
+      
+      const archiveChannel = await this.client.channels.fetch(archiveChannelId).catch(() => null);
+      if (!archiveChannel) return;
+
+      const category = config.ticketCategories[ticket.ticket_type];
+      const messageCount = transcript?.messages?.length || 0;
+      
+      const archiveEmbed = brandEmbed({
+        title: `📁 Ticket archivé - ${category?.name || ticket.ticket_type}`,
+        fields: [
+          { name: "👤 Client", value: `${ticket.users.discord_tag} (<@${ticket.users.discord_id}>)`, inline: true },
+          { name: "🎫 Type", value: category?.name || ticket.ticket_type, inline: true },
+          { name: "🔒 Fermé par", value: `<@${closedBy}>`, inline: true },
+          { name: "📅 Durée", value: `<t:${Math.floor(new Date(ticket.created_at).getTime() / 1000)}:R> → <t:${Math.floor(Date.now() / 1000)}:R>`, inline: false },
+          { name: "💬 Messages", value: `${messageCount} messages`, inline: true },
+          { name: "📝 Raison", value: reason, inline: false }
+        ]
+      });
+
+      await archiveChannel.send({ embeds: [archiveEmbed] });
+      
+    } catch (error) {
+      console.error('Erreur lors de l\'archivage:', error);
     }
   }
 }

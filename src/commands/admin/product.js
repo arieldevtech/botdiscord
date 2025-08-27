@@ -5,6 +5,11 @@ const config = require("../../../config.json");
 const fs = require("fs");
 const path = require("path");
 
+function hasAdminRole(member) {
+  const adminRoleId = config.roles?.adminRoleId;
+  return adminRoleId ? member.roles.cache.has(adminRoleId) : false;
+}
+
 function saveConfig(newConfig) {
   const configPath = path.join(process.cwd(), "config.json");
   fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2), "utf8");
@@ -56,6 +61,12 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   cooldown: 5,
   async autocomplete(interaction) {
+    const member = interaction.member;
+    const hasAdmin = hasAdminRole(member) || member.permissions.has(PermissionFlagsBits.ManageGuild);
+    if (!hasAdmin) {
+      return interaction.respond([]);
+    }
+
     const products = config.products || [];
     const focused = interaction.options.getFocused().toLowerCase();
     const filtered = products
@@ -66,6 +77,14 @@ module.exports = {
   },
   async execute(interaction) {
     const subcommand = interaction.options.getSubcommand();
+    const member = interaction.member;
+    
+    // Vérification des permissions admin
+    const hasAdmin = hasAdminRole(member) || member.permissions.has(PermissionFlagsBits.ManageGuild);
+    if (!hasAdmin) {
+      return interaction.reply({ ephemeral: true, embeds: [errorEmbed("❌ Vous devez avoir le rôle administrateur pour utiliser cette commande.")] });
+    }
+
     const currentConfig = { ...config };
     const products = currentConfig.products || [];
 

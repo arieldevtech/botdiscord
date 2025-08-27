@@ -22,6 +22,7 @@
   "ticketHubChannelId": "1407818322703290532",
   "productShowcaseChannelId": "1407818314759012494",
   "supportRoleIds": ["1407818287126937685", "1407818285927497900"],
+  "archiveChannelId": "1407818327325409461",
   "ticketCategories": {
     "plugin_dev": {
       "name": "Plugin Development",

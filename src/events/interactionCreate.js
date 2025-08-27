@@ -166,7 +166,15 @@ module.exports = {
           });
         }
 
-        if (['plugin_dev', 'mc_build', 'complete_server'].includes(ticket.ticket_type)) {
+        const embed = buildFaqCategoryEmbed(content.data, categoryKey);
+        if (!embed) {
+          const replyMethod = interaction.deferred ? 'editReply' : 'followUp';
+          return interaction[replyMethod]({
+            flags: 64,
+            embeds: [errorEmbed("❌ Category not found.")]
+          });
+        }
+
         const buttons = buildFaqButtons();
         
         const replyMethod = interaction.deferred ? 'editReply' : 'followUp';

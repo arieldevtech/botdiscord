@@ -86,12 +86,6 @@ async function createTicketChannel(guild, user, categoryKey) {
     type: ChannelType.GuildText,
     parent: parentId || undefined,
     permissionOverwrites: overwrites,
-  }
-  )
-  await channel.send({ 
-    content: `<@${userId}>`, 
-    embeds: [embed], 
-    components: buttons 
   });
 
   return channel;

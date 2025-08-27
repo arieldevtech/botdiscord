@@ -44,11 +44,15 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
   try {
     // Initialize database service
     const db = getDatabase();
-    const health = await db.healthCheck();
-    if (health.healthy) {
-      logger.success("[DB] Database connection established");
+    if (db.isEnabled()) {
+      const health = await db.healthCheck();
+      if (health.healthy) {
+        logger.success("[DB] Database connection established");
+      } else {
+        logger.error("[DB] Database health check failed:", health.error);
+      }
     } else {
-      logger.error("[DB] Database health check failed:", health.error);
+      logger.warn("[DB] Running in limited mode without database");
     }
 
     // Load Commands & Events

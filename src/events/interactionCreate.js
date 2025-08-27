@@ -52,29 +52,44 @@ module.exports = {
         const db = getDatabase();
         const userId = interaction.user.id;
         
-        // Check if user exists in database
-        let user = await db.getUserByDiscordId(userId);
-        if (!user) {
-          user = await db.createUser(userId, interaction.user.tag);
-        }
-        
-        // Check for existing open ticket
-        const existingTicket = await db.getOpenTicketByUserId(user.id);
-        if (existingTicket) {
-          return interaction.reply({ ephemeral: true, embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")] });
+        if (db.isEnabled()) {
+          // Check if user exists in database
+          let user = await db.getUserByDiscordId(userId);
+          if (!user) {
+            user = await db.createUser(userId, interaction.user.tag);
+          }
+          
+          // Check for existing open ticket
+          const existingTicket = await db.getOpenTicketByUserId(user.id);
+          if (existingTicket) {
+            return interaction.reply({ ephemeral: true, embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")] });
+          }
         }
 
         await interaction.deferReply({ ephemeral: true });
         const channel = await createTicketChannel(interaction.guild, interaction.user, categoryKey);
         
-        // Create ticket in database
-        const ticket = await db.createTicket(user.id, categoryKey, channel.id);
-        
-        // Log the action
-        await db.logAction("ticket_created", userId, "ticket", ticket.id, { categoryKey, channelId: channel.id });
+        let ticket = null;
+        if (db.isEnabled()) {
+          // Create ticket in database
+          const user = await db.getUserByDiscordId(userId) || await db.createUser(userId, interaction.user.tag);
+          ticket = await db.createTicket(user.id, categoryKey, channel.id);
+          
+          // Log the action
+          await db.logAction("ticket_created", userId, "ticket", ticket.id, { categoryKey, channelId: channel.id });
+        }
 
         const intro = buildTicketIntroEmbed(categoryKey);
-        await channel.send({ content: `<@${userId}>`, embeds: [intro] });
+        
+        // Create ticket buttons
+        const buttons = ticket ? ticketManager.createTicketButtons(ticket.id, categoryKey) : [];
+        
+        await channel.send({ 
+          content: `<@${userId}>`, 
+          embeds: [intro], 
+          components: buttons 
+        });
+        
         // DM notification
         try {
           await interaction.user.send({ embeds: [brandEmbed({ title: "🎫 Ticket Created", description: `Your ticket has been opened in ${channel}. A staff member will assist you shortly.` })] });
@@ -92,10 +107,14 @@ module.exports = {
 
         switch (action) {
           case "answer":
-            const ticket = await getDatabase().getTicketByChannelId(interaction.channel.id);
-            if (ticket) {
-              const modal = ticketManager.createAnswerModal(ticket.id, ticket.ticket_type);
-              await interaction.showModal(modal);
+            if (getDatabase().isEnabled()) {
+              const ticket = await getDatabase().getTicketByChannelId(interaction.channel.id);
+              if (ticket) {
+                const modal = ticketManager.createAnswerModal(ticket.id, ticket.ticket_type);
+                await interaction.showModal(modal);
+              }
+            } else {
+              await interaction.reply({ ephemeral: true, embeds: [errorEmbed("❌ Database not available.")] });
             }
             return;
 

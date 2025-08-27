@@ -7,8 +7,10 @@ class DatabaseService {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
     if (!url || !serviceKey) {
-      logger.error("Missing Supabase credentials (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY)");
-      throw new Error("Supabase not configured");
+      logger.warn("Missing Supabase credentials (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY)");
+      logger.warn("Database features will be disabled. Bot will run in limited mode.");
+      this.supabase = null;
+      return;
     }
     
     this.supabase = createClient(url, serviceKey, {
@@ -18,8 +20,13 @@ class DatabaseService {
     logger.success("Database service initialized");
   }
 
+  isEnabled() {
+    return this.supabase !== null;
+  }
+
   // User management
   async createUser(discordId, discordTag) {
+    if (!this.isEnabled()) return null;
     try {
       const { data, error } = await this.supabase
         .from("users")

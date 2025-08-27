@@ -204,11 +204,12 @@ class TicketManager {
       });
 
       const embed = brandEmbed({
-        title: "🎯 Ticket pris en charge",
-        description: `${interaction.user} a pris en charge ce ticket.`,
+        title: "🎯 **Ticket Claimed**",
+        description: `${interaction.user} has taken ownership of this ticket and will assist you shortly.`,
         fields: [
-          { name: "Status", value: "**Claimed**", inline: true },
-          { name: "Assigné à", value: `<@${interaction.user.id}>`, inline: true }
+          { name: "📋 Status", value: "**Claimed**", inline: true },
+          { name: "👤 Assigned to", value: `<@${interaction.user.id}>`, inline: true },
+          { name: "⏰ Next Steps", value: "Please wait for the assigned staff member to respond", inline: false }
         ]
       });
 
@@ -218,11 +219,12 @@ class TicketManager {
       try {
         const client = await interaction.client.users.fetch(ticket.users.discord_id);
         const dmEmbed = brandEmbed({
-          title: "🎯 Votre ticket a été pris en charge",
-          description: `Un membre de notre équipe support s'occupe maintenant de votre demande.`,
+          title: "🎯 **Your Ticket Has Been Claimed**",
+          description: `Great news! A member of our support team has taken ownership of your ticket and will assist you shortly.`,
           fields: [
-            { name: "Ticket", value: `<#${interaction.channel.id}>`, inline: true },
-            { name: "Assigné à", value: interaction.user.username, inline: true }
+            { name: "🎫 Ticket Channel", value: `<#${interaction.channel.id}>`, inline: true },
+            { name: "👤 Assigned Staff", value: interaction.user.username, inline: true },
+            { name: "⏰ What's Next", value: "Please wait for your assigned staff member to respond in the ticket channel.", inline: false }
           ]
         });
         await client.send({ embeds: [dmEmbed] });
@@ -302,11 +304,12 @@ class TicketManager {
       try {
         const client = await this.client.users.fetch(ticket.users.discord_id);
         const dmEmbed = brandEmbed({
-          title: "🔒 Votre ticket a été fermé",
-          description: `Votre ticket a été fermé par notre équipe support.`,
+          title: "🔒 **Your Ticket Has Been Closed**",
+          description: `Your support ticket has been closed by our team. Thank you for using our support system!`,
           fields: [
-            { name: "Raison", value: reason, inline: false },
-            { name: "Fermé le", value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
+            { name: "📝 Reason", value: reason, inline: false },
+            { name: "🕐 Closed At", value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true },
+            { name: "💬 Feedback", value: "If you need further assistance, feel free to open a new ticket!", inline: false }
           ]
         });
         await client.send({ embeds: [dmEmbed] });

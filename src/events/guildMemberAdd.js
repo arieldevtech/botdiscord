@@ -35,12 +35,12 @@ module.exports = {
       const channel = member.client.channels.cache.get(channelId) || (await member.client.channels.fetch(channelId).catch(() => null));
       if (!channel) return;
       const embed = brandEmbed({
-        title: `🎉 Welcome, ${member.user.username}!`,
-        description: "We’re excited to have you here. Please take a moment to review our rules and say hi!",
+        title: `🎉 **Welcome to the server, ${member.user.username}!**`,
+        description: "We're excited to have you join our community! Here's everything you need to get started:",
         fields: [
-          { name: "__Getting Started__", value: "Introduce yourself in <#1407818331062272123> and check out <#rules>." },
-          { name: "__Key Channels__", value: "• 📢 <#1407823254059483227> — Important updates\n• 💬 <#general> — Chat with everyone\n• 🆘 <#1407818324523618376> — Ask questions or open a ticket" },
-          { name: "__Need Help?__", value: "Ask staff in <#1407818322703290532> or open a ticket. We’re here for you!" },
+          { name: "🚀 **Getting Started**", value: "• Read our <#1407818299399475270> carefully\n• Introduce yourself in <#1407818331062272123>\n• Explore our channels and have fun!", inline: false },
+          { name: "📢 **Important Channels**", value: "• <#1407823254059483227> — Server announcements\n• <#1407818324523618376> — General chat\n• <#1407818322703290532> — Get support", inline: false },
+          { name: "🆘 **Need Help?**", value: "• Ask questions in <#1407818324523618376>\n• Open a support ticket in <#1407818322703290532>\n• Our staff team is here to help!", inline: false },
         ],
       });
       await channel.send({ content: `<@${member.id}>`, embeds: [embed] });

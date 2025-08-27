@@ -1,4 +1,5 @@
 const { InteractionType, PermissionFlagsBits, ComponentType, ChannelType } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const logger = require("../utils/logger");
 const { checkAndSetCooldown } = require("../utils/cooldown");
 const { brandEmbed, errorEmbed } = require("../lib/embeds");
@@ -62,7 +63,7 @@ module.exports = {
           // Check for existing open ticket
           const existingTicket = await db.getOpenTicketByUserId(user.id);
           if (existingTicket) {
-            return interaction.reply({ embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")], flags: 64 });
+            return interaction.reply({ embeds: [errorEmbed("❌ **Ticket Already Open**\n\nYou already have an active ticket. Please close it before creating a new one.\n\n**Your current ticket:** <#" + existingTicket.channel_id + ">")], flags: 64 });
           }
         }
 
@@ -92,10 +93,20 @@ module.exports = {
         
         // DM notification
         try {
-          await interaction.user.send({ embeds: [brandEmbed({ title: "🎫 Ticket Created", description: `Your ticket has been opened in ${channel}. A staff member will assist you shortly.` })] });
+          const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
+          await interaction.user.send({ embeds: [brandEmbed({ 
+            title: "🎫 **Ticket Created Successfully**", 
+            description: `Your **${categoryName}** ticket has been created and our team has been notified.\n\n**Channel:** ${channel}\n**Next Steps:** Please answer the questions in your ticket channel to help us assist you better.\n\n*A staff member will respond as soon as possible.*`,
+            fields: [
+              { name: "📋 What to do now", value: "• Answer the questions using the button\n• Provide detailed information\n• Wait for staff response", inline: false }
+            ]
+          })] });
         } catch (_) {}
 
-        await interaction.editReply({ embeds: [brandEmbed({ title: "🎫 Ticket Created", description: `Channel: ${channel}` })] });
+        await interaction.editReply({ embeds: [brandEmbed({ 
+          title: "✅ **Ticket Created**", 
+          description: `Your **${categoryName}** ticket has been created successfully!\n\n**Channel:** ${channel}\n\nPlease check your DMs for additional information.` 
+        })] });
         return;
       }
 
@@ -211,31 +222,32 @@ module.exports = {
                 });
 
                 const embed = brandEmbed({
-                  title: "✅ Devis accepté",
-                  description: `Votre devis a été accepté. Cliquez sur le bouton ci-dessous pour procéder au paiement.`,
+                  title: "✅ **Quote Accepted**",
+                  description: `Thank you for accepting our quote! Click the button below to proceed with the secure payment.`,
                   fields: [
-                    { name: "Montant", value: `${(quote.amount_cents / 100).toFixed(2)} €`, inline: true },
-                    { name: "Description", value: quote.description, inline: false }
+                    { name: "💰 Amount", value: `**€${(quote.amount_cents / 100).toFixed(2)}**`, inline: true },
+                    { name: "🔒 Security", value: "Secured by Stripe", inline: true },
+                    { name: "📝 Description", value: quote.description, inline: false }
                   ]
                 });
 
                 const row = new ActionRowBuilder().addComponents(
                   new ButtonBuilder()
                     .setStyle(ButtonStyle.Link)
-                    .setLabel("Payer maintenant")
+                    .setLabel("💳 Pay Now")
                     .setURL(session.url)
-                    .setEmoji("💳")
                 );
 
                 await interaction.reply({ embeds: [embed], components: [row] });
 
                 // Notifier dans le ticket
                 const ticketEmbed = brandEmbed({
-                  title: "✅ Devis accepté par le client",
-                  description: `${interaction.user} a accepté le devis et peut maintenant procéder au paiement.`,
+                  title: "✅ **Quote Accepted by Client**",
+                  description: `${interaction.user} has accepted the quote and can now proceed with payment.`,
                   fields: [
-                    { name: "Montant", value: `${(quote.amount_cents / 100).toFixed(2)} €`, inline: true },
-                    { name: "Session Stripe", value: `\`${session.id}\``, inline: true }
+                    { name: "💰 Amount", value: `**€${(quote.amount_cents / 100).toFixed(2)}**`, inline: true },
+                    { name: "🔗 Stripe Session", value: `\`${session.id}\``, inline: true },
+                    { name: "⏰ Next Steps", value: "Wait for payment confirmation", inline: false }
                   ]
                 });
 
@@ -259,15 +271,15 @@ module.exports = {
                 
                 await interaction.reply({
                   embeds: [brandEmbed({
-                    title: "❌ Devis refusé",
-                    description: "Vous avez refusé ce devis. L'équipe support sera notifiée."
+                    title: "❌ **Quote Declined**",
+                    description: "You have declined this quote. Our support team has been notified and will discuss alternative options with you."
                   })]
                 });
 
                 // Notifier dans le ticket
                 const ticketEmbed = brandEmbed({
-                  title: "❌ Devis refusé par le client",
-                  description: `${interaction.user} a refusé le devis.`
+                  title: "❌ **Quote Declined by Client**",
+                  description: `${interaction.user} has declined the quote. Please discuss alternative options or pricing.`
                 });
 
                 await interaction.followUp({ embeds: [ticketEmbed] });

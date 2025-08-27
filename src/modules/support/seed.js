@@ -10,18 +10,33 @@ const CACHE_PATH = ".cache/support.json";
 
 function buildHubEmbed() {
   const desc = [
-    "Welcome to the **Ticket Hub**.",
-    "Pick a category to open a private ticket with the support team.",
-    "• One active ticket per user",
-    "• Describe your request clearly for faster assistance",
+    "🎫 **Welcome to our Support System**",
+    "",
+    "Select a category below to create a private ticket with our support team.",
+    "",
+    "**📋 Guidelines:**",
+    "• Only **one active ticket** per user",
+    "• Provide **detailed information** for faster assistance", 
+    "• Be **patient** - we'll respond as soon as possible",
+    "• Use **appropriate category** for your request"
   ].join("\n");
-  return brandEmbed({ title: "🎫 Ticket Hub", description: desc });
+  return brandEmbed({ 
+    title: "🎫 **Support Ticket Hub**", 
+    description: desc,
+    fields: [
+      { name: "⚡ **Quick Tips**", value: "• Check our FAQ first\n• Have relevant details ready\n• Screenshots help a lot!", inline: false }
+    ]
+  });
 }
 
 function buildHubMenu() {
-  const menu = new StringSelectMenuBuilder().setCustomId("support:select").setPlaceholder("Select a category");
+  const menu = new StringSelectMenuBuilder().setCustomId("support:select").setPlaceholder("🎯 Choose your support category...");
   const cats = config.ticketCategories || {};
-  const options = Object.entries(cats).map(([key, v]) => ({ label: v.name || key, value: key }));
+  const options = Object.entries(cats).map(([key, v]) => ({ 
+    label: v.name || key, 
+    value: key,
+    emoji: v.emoji || "🎫"
+  }));
   menu.addOptions(options.slice(0, 25));
   return new ActionRowBuilder().addComponents(menu);
 }

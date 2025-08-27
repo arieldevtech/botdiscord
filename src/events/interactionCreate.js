@@ -5,6 +5,7 @@ const { brandEmbed, errorEmbed } = require("../lib/embeds");
 const { createTicketChannel, buildTicketIntroEmbed } = require("../modules/support/seed");
 const config = require("../../config.json");
 const { readJson, writeJson } = require("../utils/cache");
+const { getDatabase } = require("../services/database");
 const { pageEmbeds, pageButtons, handleBuy } = require("../modules/catalog/seed");
 
 module.exports = {
@@ -45,16 +46,29 @@ module.exports = {
       // 3) Support select menu → create ticket
       if (interaction.isStringSelectMenu() && interaction.customId === "support:select") {
         const categoryKey = interaction.values?.[0];
-        const cache = readJson(".cache/tickets.json", { open: {} });
+        const db = getDatabase();
         const userId = interaction.user.id;
-        if (cache.open[userId]) {
+        
+        // Check if user exists in database
+        let user = await db.getUserByDiscordId(userId);
+        if (!user) {
+          user = await db.createUser(userId, interaction.user.tag);
+        }
+        
+        // Check for existing open ticket
+        const existingTicket = await db.getOpenTicketByUserId(user.id);
+        if (existingTicket) {
           return interaction.reply({ ephemeral: true, embeds: [errorEmbed("You already have an open ticket. Please close it before creating a new one.")] });
         }
 
         await interaction.deferReply({ ephemeral: true });
         const channel = await createTicketChannel(interaction.guild, interaction.user, categoryKey);
-        cache.open[userId] = { channelId: channel.id, categoryKey, openedAt: new Date().toISOString() };
-        writeJson(".cache/tickets.json", cache);
+        
+        // Create ticket in database
+        const ticket = await db.createTicket(user.id, categoryKey, channel.id);
+        
+        // Log the action
+        await db.logAction("ticket_created", userId, "ticket", ticket.id, { categoryKey, channelId: channel.id });
 
         const intro = buildTicketIntroEmbed(categoryKey);
         await channel.send({ content: `<@${userId}>`, embeds: [intro] });

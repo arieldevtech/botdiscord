@@ -7,7 +7,7 @@ const path = require("path");
 const { loadCommands } = require("./handlers/commands");
 const { loadEvents } = require("./handlers/events");
 const { registerGuildCommands } = require("./handlers/registerCommands");
-const { initSupabase, pingSupabase } = require("./utils/supabase");
+const { getDatabase } = require("./services/database");
 const { syncRulesMessage } = require("./features/rules");
 const { ensureTicketHub, validateTicketCategories } = require("./modules/support/seed");
 const { ensureProductShowcase } = require("./modules/catalog/seed");
@@ -42,9 +42,14 @@ process.on("uncaughtException", (err) => { logger.error("[uncaughtException]", e
 
 (async () => {
   try {
-    // Supabase boot-only init + ping
-    const supa = initSupabase();
-    await pingSupabase(supa);
+    // Initialize database service
+    const db = getDatabase();
+    const health = await db.healthCheck();
+    if (health.healthy) {
+      logger.success("[DB] Database connection established");
+    } else {
+      logger.error("[DB] Database health check failed:", health.error);
+    }
 
     // Load Commands & Events
     const { commandsJson, totalLoaded: commandsLoaded } = await loadCommands(client, path.join(__dirname, "commands"));

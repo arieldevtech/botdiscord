@@ -2,6 +2,7 @@ const { ActionRowBuilder, StringSelectMenuBuilder, ChannelType, PermissionFlagsB
 const config = require("../../../config.json");
 const { brandEmbed } = require("../../lib/embeds");
 const { readJson, writeJson } = require("../../utils/cache");
+const { getDatabase } = require("../../services/database");
 const logger = require("../../utils/logger");
 
 const CACHE_PATH = ".cache/support.json";

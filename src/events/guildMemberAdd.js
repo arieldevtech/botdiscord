@@ -1,12 +1,22 @@
 const config = require("../../config.json");
 const logger = require("../utils/logger");
 const { brandEmbed } = require("../lib/embeds");
-const { ChannelType } = require("discord.js");
+const { getDatabase } = require("../services/database");
 
 module.exports = {
   name: "guildMemberAdd",
   once: false,
   async execute(member) {
+    const db = getDatabase();
+    
+    // Create user in database
+    try {
+      await db.createUser(member.user.id, member.user.tag);
+      logger.info(`[Welcome] User ${member.user.tag} added to database`);
+    } catch (error) {
+      logger.error(`[Welcome] Failed to add user to database:`, error);
+    }
+
     // Auto role
     const roleId = config.roles?.autoRoleId;
     if (roleId) {

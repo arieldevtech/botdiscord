@@ -498,7 +498,91 @@ module.exports = {
         return;
       }
 
-      // 7) Slash commands handling
+      // 8) Refund confirmation buttons
+      if (interaction.isButton() && interaction.customId.startsWith("refund:")) {
+        const parts = interaction.customId.split(":");
+        const action = parts[1];
+        
+        if (action === "confirm") {
+          const paymentId = parts[2];
+          const refundAmountCents = parseInt(parts[3]);
+          const requesterId = parts[4];
+          
+          if (interaction.user.id !== requesterId) {
+            return interaction.reply({
+              flags: 64,
+              embeds: [errorEmbed("❌ Only the user who initiated the refund can confirm.")]
+            });
+          }
+          
+          await interaction.deferReply();
+          
+          try {
+            const db = getDatabase();
+            
+            // Create refund record
+            const { data: refund, error } = await db.supabase
+              .from("refunds")
+              .insert({
+                payment_id: paymentId,
+                user_id: (await db.supabase.from("payments").select("user_id").eq("id", paymentId).single()).data.user_id,
+                reason: "Manual refund by administration",
+                amount_cents: refundAmountCents,
+                currency: "EUR",
+                status: "approved",
+                processed_by_discord_id: interaction.user.id
+              })
+              .select()
+              .single();
+            
+            if (error) throw error;
+            
+            // Update payment status
+            await db.supabase
+              .from("payments")
+              .update({ status: refundAmountCents >= (await db.supabase.from("payments").select("amount_cents").eq("id", paymentId).single()).data.amount_cents ? "refunded" : "partial_refund" })
+              .eq("id", paymentId);
+            
+            // Log action
+            await db.logAction('refund_processed', interaction.user.id, 'refund', refund.id, {
+              payment_id: paymentId,
+              amount_cents: refundAmountCents
+            });
+            
+            const embed = brandEmbed({
+              title: "✅ **Refund Processed**",
+              description: "The refund has been processed successfully.",
+              fields: [
+                { name: "💸 Amount", value: `€${(refundAmountCents / 100).toFixed(2)}`, inline: true },
+                { name: "🆔 Refund ID", value: `\`${refund.id}\``, inline: true },
+                { name: "📅 Processed", value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
+              ]
+            });
+            
+            await interaction.editReply({ embeds: [embed] });
+            
+          } catch (error) {
+            console.error('Error processing refund:', error);
+            await interaction.editReply({
+              embeds: [errorEmbed("❌ Error processing the refund.")]
+            });
+          }
+          return;
+        }
+        
+        if (action === "cancel") {
+          await interaction.update({
+            embeds: [brandEmbed({
+              title: "❌ Refund Cancelled",
+              description: "The refund has been cancelled."
+            })],
+            components: []
+          });
+          return;
+        }
+      }
+
+      // 9) Slash commands handling
       if (interaction.type !== InteractionType.ApplicationCommand) return;
 
       const command = client.commands.get(interaction.commandName);

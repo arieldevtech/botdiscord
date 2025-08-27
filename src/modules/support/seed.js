@@ -42,6 +42,15 @@ function buildHubMenu() {
   return new ActionRowBuilder().addComponents(menu);
 }
 
+// Export functions for external use
+module.exports = { 
+  ensureTicketHub, 
+  createTicketChannel, 
+  buildTicketIntroEmbed, 
+  validateTicketCategories,
+  buildHubEmbed,
+  buildHubMenu
+};
 async function ensureTicketHub(client) {
   const channelId = config.ticketHubChannelId;
   if (!channelId) return logger.warn("[support] ticketHubChannelId is not configured");

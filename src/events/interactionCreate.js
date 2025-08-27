@@ -53,6 +53,20 @@ module.exports = {
         const db = getDatabase();
         const userId = interaction.user.id;
         
+        // Reset the dropdown for this user by updating the original message
+        try {
+          const { ensureTicketHub } = require("../modules/support/seed");
+          const originalEmbed = require("../modules/support/seed").buildHubEmbed();
+          const originalMenu = require("../modules/support/seed").buildHubMenu();
+          await interaction.update({ 
+            embeds: [originalEmbed], 
+            components: [originalMenu] 
+          });
+        } catch (resetError) {
+          console.error("Error resetting support dropdown:", resetError);
+          // Continue with ticket creation even if reset fails
+        }
+        
         if (db.isEnabled()) {
           // Check if user exists in database
           let user = await db.getUserByDiscordId(userId);
@@ -70,7 +84,7 @@ module.exports = {
           }
         }
 
-        await interaction.deferReply({ flags: 64 });
+        // Use followUp since we already updated the interaction above
         const channel = await createTicketChannel(interaction.guild, interaction.user, categoryKey);
         
         let ticket = null;
@@ -95,10 +109,13 @@ module.exports = {
         });
         
         const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
-        await interaction.editReply({ embeds: [brandEmbed({ 
+        await interaction.followUp({ 
+          flags: 64,
+          embeds: [brandEmbed({ 
           title: "✅ **Ticket Created**", 
           description: `Your **${categoryName}** ticket has been created successfully!\n\n**Channel:** ${channel}\n\nPlease check your DMs for additional information.` 
-        })] });
+        })] 
+        });
         
         // DM notification
         try {
@@ -119,9 +136,25 @@ module.exports = {
         const categoryKey = interaction.values?.[0];
         const { readFaqContent, buildFaqCategoryEmbed, buildFaqButtons } = require("../features/faq");
         
+        // Reset the dropdown for this user by updating the original message
+        try {
+          const content = readFaqContent();
+          if (content.data) {
+            const originalBuilt = buildFaqMainEmbed(content.data);
+            const originalSelectMenu = buildFaqSelectMenu(content.data);
+            await interaction.update({
+              embeds: [originalBuilt.embed],
+              components: originalSelectMenu ? [originalSelectMenu] : []
+            });
+          }
+        } catch (resetError) {
+          console.error("Error resetting FAQ dropdown:", resetError);
+          // Continue with FAQ display even if reset fails
+        }
+        
         const content = readFaqContent();
         if (!content.data) {
-          return interaction.reply({
+          return interaction.followUp({
             flags: 64,
             embeds: [errorEmbed("❌ FAQ content not available.")]
           });
@@ -130,7 +163,7 @@ module.exports = {
         const embed = buildFaqCategoryEmbed(content.data, categoryKey);
         const buttons = buildFaqButtons();
         
-        await interaction.reply({
+        await interaction.followUp({
           flags: 64,
           embeds: [embed],
           components: [buttons]

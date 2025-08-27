@@ -313,6 +313,10 @@ class DatabaseService {
 
   // Health check
   async healthCheck() {
+    if (!this.supabase) {
+      return { healthy: false, error: "Supabase client not initialized" };
+    }
+    
     try {
       const { data, error } = await this.supabase
         .from("users")

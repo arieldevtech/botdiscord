@@ -1,5 +1,13 @@
 # Korō Assistant (Discord.js v14) — v1.1
 
+**⚠️ IMPORTANT: This Discord bot cannot run in WebContainer/browser environments.**
+
+This bot requires a persistent WebSocket connection to Discord's Gateway API, which is not supported in browser-based environments like WebContainer. To run this bot, you need to:
+
+1. Download the project files to your local machine
+2. Install Node.js (v16 or higher)
+3. Run the bot locally or deploy it to a server environment
+
 Modern, modular, secure Discord bot with:
 - Guild-only slash registration (fast dev)
 - Centralized embeds (brand styling)
@@ -10,6 +18,8 @@ Modern, modular, secure Discord bot with:
 - Supabase init + ping at boot only
 
 ## Quick Start
+
+**Note: These steps must be performed in a local Node.js environment, not in WebContainer.**
 
 1) Create env
 ```bash

@@ -4,9 +4,13 @@
   "description": "Korō Assistant Discord bot scaffold (discord.js v14)",
   "main": "src/index.js",
   "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "check-env": "node -e \"console.log('Environment check:', process.env.NODE_ENV || 'development')\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.3",

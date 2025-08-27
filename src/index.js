@@ -1,4 +1,17 @@
 require("dotenv").config();
+
+// Check if running in WebContainer environment
+if (typeof window !== 'undefined' || process.env.WEBCONTAINER === 'true') {
+  console.error('❌ Discord bots cannot run in WebContainer/browser environments.');
+  console.error('📋 This bot requires a persistent WebSocket connection to Discord.');
+  console.error('💡 To run this bot:');
+  console.error('   1. Download the project files to your local machine');
+  console.error('   2. Install Node.js (v16 or higher)');
+  console.error('   3. Run: npm install && npm start');
+  console.error('   4. Or deploy to a server environment (VPS, Heroku, etc.)');
+  process.exit(1);
+}
+
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const logger = require("./utils/logger");
 const config = require("../config.json");

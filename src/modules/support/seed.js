@@ -162,3 +162,12 @@ async function validateTicketCategories(client) {
     }
   }
 }
+
+module.exports = { 
+  ensureTicketHub, 
+  createTicketChannel, 
+  buildTicketIntroEmbed, 
+  validateTicketCategories,
+  buildHubEmbed,
+  buildHubMenu
+};

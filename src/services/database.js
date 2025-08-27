@@ -328,6 +328,7 @@ class DatabaseService {
     }
   }
 
+
   async getQuoteById(quoteId) {
     try {
       const { data, error } = await this.supabase

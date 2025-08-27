@@ -18,6 +18,15 @@ process.env.TOKEN = process.env.TOKEN || process.env.DISCORD_TOKEN;
 process.env.CLIENT_ID = process.env.CLIENT_ID || process.env.DISCORD_APP_ID;
 process.env.GUILD_ID = process.env.GUILD_ID || (config.guildId || "");
 
+// Validate Stripe configuration
+const STRIPE_REQUIRED = ["STRIPE_SECRET_KEY"];
+const stripeIssues = STRIPE_REQUIRED.filter((k) => !process.env[k] || String(process.env[k]).includes("your_"));
+if (stripeIssues.length) {
+  logger.warn("Stripe configuration incomplete. Missing/placeholder:", stripeIssues.join(", "));
+  logger.warn("Payments will be disabled. Add your Stripe keys to .env file.");
+  logger.warn("Get your Stripe keys from: https://dashboard.stripe.com/apikeys");
+}
+
 // 1) Validate environment
 const REQUIRED_ENV = ["TOKEN", "CLIENT_ID", "GUILD_ID"]; 
 const missing = REQUIRED_ENV.filter((k) => !process.env[k] || String(process.env[k]).includes("your_"));

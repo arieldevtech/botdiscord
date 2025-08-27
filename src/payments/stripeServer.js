@@ -12,7 +12,14 @@ const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_PORT = Number(process.env.STRIPE_PORT || 8787);
 const DOWNLOAD_SECRET = process.env.DOWNLOAD_URL_SECRET || "download_secret_change_me";
 
-const stripe = new Stripe(STRIPE_KEY, { apiVersion: "2024-06-20" });
+// Initialize Stripe only if key is provided
+let stripe = null;
+if (STRIPE_KEY && !STRIPE_KEY.includes('your_')) {
+  stripe = new Stripe(STRIPE_KEY, { apiVersion: "2024-06-20" });
+  logger.success("[stripe] Stripe client initialized");
+} else {
+  logger.warn("[stripe] Stripe not configured - payments disabled");
+}
 
 let discordClient = null;
 
@@ -44,6 +51,10 @@ function productsBySku() {
 }
 
 async function createCheckoutSession(payload) {
+  if (!stripe) {
+    throw new Error("Stripe not configured");
+  }
+  
   const { discord_user_id, discord_username, sku, name, description, priceEUR, deliverableFile } = payload;
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -83,6 +94,10 @@ async function createCheckoutSession(payload) {
 }
 
 async function createQuoteCheckoutSession(payload) {
+  if (!stripe) {
+    throw new Error("Stripe not configured");
+  }
+  
   const { discord_user_id, discord_username, quote_id, amount_cents, description, currency } = payload;
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -186,16 +201,26 @@ function ensureCacheFiles() {
 }
 
 function startServer(client) {
+  if (!stripe) {
+    logger.warn("[stripe] Stripe server not started - missing configuration");
+    return;
+  }
+  
   ensureCacheFiles();
   setDiscordClient(client);
   const app = express();
 
   // Webhook FIRST with raw body
   app.post("/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+    if (!STRIPE_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET.includes('your_')) {
+      logger.error("Webhook secret not configured");
+      return res.status(400).send("Webhook secret not configured");
+    }
+    
     let event;
     try {
       const sig = req.headers["stripe-signature"];
-      event = Stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
     } catch (err) {
       logger.error("Webhook signature verification failed", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);

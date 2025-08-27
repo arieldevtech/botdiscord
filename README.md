@@ -25,8 +25,12 @@ Modern, modular, secure Discord bot with:
 ```bash
 cd discord-bot
 cp .env.example .env
-# Fill DISCORD_TOKEN, DISCORD_APP_ID, GUILD_ID
-# Optional: SUPABASE_URL, SUPABASE_ANON_KEY (for boot-only health check)
+# Fill required Discord credentials:
+# DISCORD_TOKEN, DISCORD_APP_ID, GUILD_ID
+# 
+# Optional: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+# 
+# Required for payments: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 ```
 
 2) Configure IDs and brand

@@ -94,6 +94,7 @@ module.exports = {
         // DM notification
         try {
           const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
+          const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
           await interaction.user.send({ embeds: [brandEmbed({ 
             title: "🎫 **Ticket Created Successfully**", 
             description: `Your **${categoryName}** ticket has been created and our team has been notified.\n\n**Channel:** ${channel}\n**Next Steps:** Please answer the questions in your ticket channel to help us assist you better.\n\n*A staff member will respond as soon as possible.*`,
@@ -103,6 +104,7 @@ module.exports = {
           })] });
         } catch (_) {}
 
+        const categoryName = (config.ticketCategories[categoryKey]?.name || categoryKey);
         await interaction.editReply({ embeds: [brandEmbed({ 
           title: "✅ **Ticket Created**", 
           description: `Your **${categoryName}** ticket has been created successfully!\n\n**Channel:** ${channel}\n\nPlease check your DMs for additional information.` 

@@ -82,6 +82,48 @@ async function createCheckoutSession(payload) {
   return { id: session.id, url: session.url, expires_at: session.expires_at };
 }
 
+async function createQuoteCheckoutSession(payload) {
+  const { discord_user_id, discord_username, quote_id, amount_cents, description, currency } = payload;
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: currency.toLowerCase(),
+          product_data: { 
+            name: "Devis personnalisé",
+            description: description 
+          },
+          unit_amount: amount_cents,
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: `http://localhost:${STRIPE_PORT}/stripe/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `http://localhost:${STRIPE_PORT}/stripe/cancel`,
+    metadata: {
+      discord_user_id,
+      discord_username,
+      quote_id,
+      type: "quote"
+    },
+  });
+
+  // store pending session
+  const sessions = readJson(".cache/sessions.json", {});
+  sessions[session.id] = {
+    discord_user_id,
+    discord_username,
+    quote_id,
+    type: "quote",
+    status: "pending",
+    created_at: new Date().toISOString(),
+  };
+  writeJson(".cache/sessions.json", sessions);
+
+  return { id: session.id, url: session.url, expires_at: session.expires_at };
+}
 function buildSuccessDM({ userId, sku, session, licenseKey, downloadToken }) {
   const p = productsBySku()[sku] || { name: sku, priceEUR: "-" };
   const link = downloadToken ? `[Download here](http://localhost:${STRIPE_PORT}/stripe/dl?token=${downloadToken})` : "—";
@@ -171,37 +213,63 @@ function startServer(client) {
           return res.json({ received: true });
         }
 
-        // Mark order
-        orders[session.id] = {
-          session_id: session.id,
-          sku: meta.sku,
-          user: meta.discord_user_id,
-          amount: session.amount_total,
-          currency: session.currency,
-          status: "paid",
-          created_at: new Date().toISOString(),
-        };
-        writeJson(".cache/orders.json", orders);
-
-        // License + download (if any)
-        let licenseKey = null;
-        let downloadToken = null;
-        if (meta.deliverableFile) {
-          licenseKey = generateLicenseKey(meta.discord_user_id, meta.sku);
-          const licenses = readJson(".cache/licenses.json", {});
-          licenses[licenseKey] = {
-            user: meta.discord_user_id,
-            sku: meta.sku,
+        if (meta.type === "quote") {
+          // Traitement des paiements de devis
+          orders[session.id] = {
             session_id: session.id,
+            quote_id: meta.quote_id,
+            user: meta.discord_user_id,
+            amount: session.amount_total,
+            currency: session.currency,
+            status: "paid",
+            type: "quote",
             created_at: new Date().toISOString(),
-            revoked: false,
           };
-          writeJson(".cache/licenses.json", licenses);
-          downloadToken = signDownloadToken(meta.deliverableFile, meta.discord_user_id, 24);
+          writeJson(".cache/orders.json", orders);
+
+          // Notifier le client du paiement réussi
+          await sendDM(meta.discord_user_id, {
+            title: "✅ Paiement reçu",
+            description: `Votre paiement a été traité avec succès. Notre équipe va maintenant commencer à travailler sur votre projet.`,
+            fields: [
+              { name: "Session", value: `\`${session.id}\``, inline: true },
+              { name: "Montant", value: `${(session.amount_total / 100).toFixed(2)} ${session.currency.toUpperCase()}`, inline: true }
+            ]
+          });
+        } else {
+          // Traitement des achats de produits
+          orders[session.id] = {
+            session_id: session.id,
+            sku: meta.sku,
+            user: meta.discord_user_id,
+            amount: session.amount_total,
+            currency: session.currency,
+            status: "paid",
+            created_at: new Date().toISOString(),
+          };
+          writeJson(".cache/orders.json", orders);
+
+          // License + download (if any)
+          let licenseKey = null;
+          let downloadToken = null;
+          if (meta.deliverableFile) {
+            licenseKey = generateLicenseKey(meta.discord_user_id, meta.sku);
+            const licenses = readJson(".cache/licenses.json", {});
+            licenses[licenseKey] = {
+              user: meta.discord_user_id,
+              sku: meta.sku,
+              session_id: session.id,
+              created_at: new Date().toISOString(),
+              revoked: false,
+            };
+            writeJson(".cache/licenses.json", licenses);
+            downloadToken = signDownloadToken(meta.deliverableFile, meta.discord_user_id, 24);
+          }
+
+          // DM user
+          await sendDM(meta.discord_user_id, buildSuccessDM({ userId: meta.discord_user_id, sku: meta.sku, session: session.id, licenseKey, downloadToken }));
         }
 
-        // DM user
-        await sendDM(meta.discord_user_id, buildSuccessDM({ userId: meta.discord_user_id, sku: meta.sku, session: session.id, licenseKey, downloadToken }));
         // Update sessions cache
         if (sessions[session.id]) { sessions[session.id].status = "completed"; writeJson(".cache/sessions.json", sessions); }
       }
@@ -240,6 +308,62 @@ function startServer(client) {
 
   // JSON parser for all other routes
   app.use(express.json());
+
+  // Pages de succès et d'annulation
+  app.get("/stripe/success", (req, res) => {
+    const sessionId = req.query.session_id;
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Paiement réussi</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+          .success { color: #28a745; font-size: 48px; margin-bottom: 20px; }
+          h1 { color: #333; margin-bottom: 20px; }
+          p { color: #666; line-height: 1.6; }
+          .session { background: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="success">✅</div>
+          <h1>Paiement réussi !</h1>
+          <p>Votre paiement a été traité avec succès. Vous recevrez une confirmation par message privé Discord.</p>
+          <div class="session">Session: ${sessionId}</div>
+          <p>Vous pouvez maintenant fermer cette page et retourner sur Discord.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
+  app.get("/stripe/cancel", (req, res) => {
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Paiement annulé</title>
+        <style>
+          body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
+          .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; margin: 0 auto; }
+          .cancel { color: #dc3545; font-size: 48px; margin-bottom: 20px; }
+          h1 { color: #333; margin-bottom: 20px; }
+          p { color: #666; line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="cancel">❌</div>
+          <h1>Paiement annulé</h1>
+          <p>Votre paiement a été annulé. Aucun montant n'a été débité.</p>
+          <p>Vous pouvez maintenant fermer cette page et retourner sur Discord.</p>
+        </div>
+      </body>
+      </html>
+    `);
+  });
 
   // Checkout endpoint
   app.post("/stripe/checkout", async (req, res) => {
@@ -280,4 +404,4 @@ function startServer(client) {
   });
 }
 
-module.exports = { startServer, createCheckoutSession, setDiscordClient };
+module.exports = { startServer, createCheckoutSession, createQuoteCheckoutSession, setDiscordClient };

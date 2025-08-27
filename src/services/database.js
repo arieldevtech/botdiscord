@@ -220,6 +220,47 @@ class DatabaseService {
   }
 
   async getTicketMessages(ticketId, limit = 100) {
+  async getQuoteById(quoteId) {
+    try {
+      const { data, error } = await this.supabase
+        .from("quotes")
+        .select("*")
+        .eq("id", quoteId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      logger.error(`[DB] Failed to get quote ${quoteId}:`, error);
+      throw error;
+    }
+  }
+
+  async updateQuoteStatus(quoteId, status) {
+    try {
+      const updateData = { status };
+      if (status === 'accepted') {
+        updateData.accepted_at = new Date().toISOString();
+      }
+      
+      const { data, error } = await this.supabase
+        .from("quotes")
+        .update(updateData)
+        .eq("id", quoteId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      logger.error(`[DB] Failed to update quote status:`, error);
+      throw error;
+    }
+  }
+
     try {
       const { data, error } = await this.supabase
         .from("ticket_messages")

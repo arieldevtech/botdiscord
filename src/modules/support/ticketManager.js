@@ -244,7 +244,18 @@ class TicketManager {
    */
   async closeTicket(ticketId, closedBy, reason = "Aucune raison spécifiée") {
     try {
-      const ticket = await this.db.getTicketByChannelId(interaction.channel.id);
+      // Récupérer le ticket par ID
+      const { data: ticket, error } = await this.db.supabase
+        .from("tickets")
+        .select(`
+          *,
+          users!inner(discord_id, discord_tag)
+        `)
+        .eq("id", ticketId)
+        .single();
+
+      if (error || !ticket) return false;
+
       if (!ticket) return false;
 
       // Mettre à jour le statut en base

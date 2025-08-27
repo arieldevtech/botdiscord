@@ -126,6 +126,21 @@ module.exports = {
             await ticketManager.handleClaim(interaction, ticketId);
             return;
 
+          case "quote":
+            if (getDatabase().isEnabled()) {
+              const ticket = await getDatabase().getTicketByChannelId(interaction.channel.id);
+              if (ticket) {
+                await interaction.reply({
+                  ephemeral: true,
+                  embeds: [brandEmbed({
+                    title: "💰 Créer un devis",
+                    description: "Utilisez la commande `/quote create` pour créer un devis pour ce ticket."
+                  })]
+                });
+              }
+            }
+            return;
+
           case "confirm_close":
             const userId = parts[3];
             if (interaction.user.id !== userId) {
@@ -160,6 +175,111 @@ module.exports = {
               })],
               components: []
             });
+            return;
+
+          case "accept_quote":
+            const quoteId = parts[2];
+            if (getDatabase().isEnabled()) {
+              try {
+                const quote = await getDatabase().getQuoteById(quoteId);
+                if (!quote) {
+                  return interaction.reply({
+                    ephemeral: true,
+                    embeds: [errorEmbed("❌ Devis non trouvé.")]
+                  });
+                }
+
+                if (quote.status !== 'pending') {
+                  return interaction.reply({
+                    ephemeral: true,
+                    embeds: [errorEmbed("❌ Ce devis n'est plus disponible.")]
+                  });
+                }
+
+                // Accepter le devis
+                await getDatabase().updateQuoteStatus(quoteId, 'accepted');
+                
+                // Créer session de paiement
+                const stripeServer = require("../payments/stripeServer");
+                const session = await stripeServer.createQuoteCheckoutSession({
+                  discord_user_id: interaction.user.id,
+                  discord_username: interaction.user.username,
+                  quote_id: quoteId,
+                  amount_cents: quote.amount_cents,
+                  description: quote.description,
+                  currency: quote.currency || 'EUR'
+                });
+
+                const embed = brandEmbed({
+                  title: "✅ Devis accepté",
+                  description: `Votre devis a été accepté. Cliquez sur le bouton ci-dessous pour procéder au paiement.`,
+                  fields: [
+                    { name: "Montant", value: `${(quote.amount_cents / 100).toFixed(2)} €`, inline: true },
+                    { name: "Description", value: quote.description, inline: false }
+                  ]
+                });
+
+                const row = new ActionRowBuilder().addComponents(
+                  new ButtonBuilder()
+                    .setStyle(ButtonStyle.Link)
+                    .setLabel("Payer maintenant")
+                    .setURL(session.url)
+                    .setEmoji("💳")
+                );
+
+                await interaction.reply({ embeds: [embed], components: [row] });
+
+                // Notifier dans le ticket
+                const ticketEmbed = brandEmbed({
+                  title: "✅ Devis accepté par le client",
+                  description: `${interaction.user} a accepté le devis et peut maintenant procéder au paiement.`,
+                  fields: [
+                    { name: "Montant", value: `${(quote.amount_cents / 100).toFixed(2)} €`, inline: true },
+                    { name: "Session Stripe", value: `\`${session.id}\``, inline: true }
+                  ]
+                });
+
+                await interaction.followUp({ embeds: [ticketEmbed] });
+
+              } catch (error) {
+                console.error('Erreur lors de l\'acceptation du devis:', error);
+                await interaction.reply({
+                  ephemeral: true,
+                  embeds: [errorEmbed("❌ Erreur lors de l'acceptation du devis.")]
+                });
+              }
+            }
+            return;
+
+          case "reject_quote":
+            const rejectQuoteId = parts[2];
+            if (getDatabase().isEnabled()) {
+              try {
+                await getDatabase().updateQuoteStatus(rejectQuoteId, 'rejected');
+                
+                await interaction.reply({
+                  embeds: [brandEmbed({
+                    title: "❌ Devis refusé",
+                    description: "Vous avez refusé ce devis. L'équipe support sera notifiée."
+                  })]
+                });
+
+                // Notifier dans le ticket
+                const ticketEmbed = brandEmbed({
+                  title: "❌ Devis refusé par le client",
+                  description: `${interaction.user} a refusé le devis.`
+                });
+
+                await interaction.followUp({ embeds: [ticketEmbed] });
+
+              } catch (error) {
+                console.error('Erreur lors du refus du devis:', error);
+                await interaction.reply({
+                  ephemeral: true,
+                  embeds: [errorEmbed("❌ Erreur lors du refus du devis.")]
+                });
+              }
+            }
             return;
         }
       }

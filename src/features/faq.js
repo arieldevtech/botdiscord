@@ -84,7 +84,7 @@ function buildFaqSelectMenu(json) {
     label: section.name,
     value: section.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
     description: `${section.items?.length || 0} questions available`,
-    emoji: section.emoji || "📝"
+    emoji: section.emoji
   }));
 
   menu.addOptions(options);
